@@ -4,7 +4,8 @@ import jwt from "jsonwebtoken";
 let users = []; // temporary in-memory storage (later replace with DB)
 
 export const signup = async (req, res) => {
-  const { name, email, password } = req.body;
+    console.log("Signup called with:", req.body);
+    const { name, email, password } = req.body;
 
   // Check if user exists
   const existing = users.find((u) => u.email === email);
@@ -27,5 +28,29 @@ export const signup = async (req, res) => {
   res.status(201).json({
     token,
     user: { id: newUser.id, name: newUser.name, email: newUser.email },
+  });
+};
+export const login = async (req, res) => {
+  console.log("Login called with:", req.body);
+    const { email, password } = req.body;
+
+  // Check if user exists
+  const user = users.find((u) => u.email === email);
+  if (!user) return res.status(400).json({ message: "Invalid credentials" });
+
+  // Compare password
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) return res.status(400).json({ message: "Invalid credentials" });
+
+  // Create JWT
+  const token = jwt.sign(
+    { id: user.id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+
+  res.json({
+    token,
+    user: { id: user.id, name: user.name, email: user.email },
   });
 };
