@@ -64,11 +64,10 @@ CREATE POLICY "Users can delete own comments" ON comments FOR DELETE USING (auth
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, name, email)
+  INSERT INTO public.profiles (id, name)
   VALUES (
     NEW.id, 
-    COALESCE(NEW.raw_user_meta_data->>'name', NEW.email),
-    NEW.email
+    COALESCE(NEW.raw_user_meta_data->>'name', NEW.email)
   );
   RETURN NEW;
 END;
