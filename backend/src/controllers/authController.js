@@ -1,56 +1,291 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { supabase } from '../config/supabase.js';
 
-let users = []; // temporary in-memory storage (later replace with DB)
+// Register new user
+export const register = async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
 
-export const signup = async (req, res) => {
-    console.log("Signup called with:", req.body);
-    const { name, email, password } = req.body;
+    console.log('Registration attempt:', { email, name });
 
-  // Check if user exists
-  const existing = users.find((u) => u.email === email);
-  if (existing) return res.status(400).json({ message: "User already exists" });
+    if (!email || !password || !name) {
+      return res.status(400).json({ 
+        message: 'Email, password, and name are required' 
+      });
+    }
 
-  // Hash password
-  const hashed = await bcrypt.hash(password, 10);
+    // Create user with Supabase Auth
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      user_metadata: {
+        name: name
+      },
+      email_confirm: true // Auto-confirm email for development
+    });
 
-  // Create user
-  const newUser = { id: users.length + 1, name, email, password: hashed };
-  users.push(newUser);
+    if (error) {
+      console.error('Supabase registration error:', error);
+      return res.status(400).json({ 
+        message: error.message || 'Database error creating new user' 
+      });
+    }
 
-  // Create JWT
-  const token = jwt.sign(
-    { id: newUser.id, email: newUser.email },
-    process.env.JWT_SECRET,
-    { expiresIn: "1h" }
-  );
+    if (!data.user) {
+      return res.status(400).json({ 
+        message: 'Failed to create user' 
+      });
+    }
+
+    // Create user profile in profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: data.user.id,
+        name: name,
+        email: email,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+      // Don't fail registration if profile creation fails
+    }
+
+    // Generate a simple token for frontend
+    const token = data.session?.access_token || 'mock-token-' + Date.now();
 
   res.status(201).json({
-    token,
-    user: { id: newUser.id, name: newUser.name, email: newUser.email },
-  });
+      message: 'User created successfully',
+      token: token,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        name: name,
+        profile_picture: null,
+        bio: null
+      }
+    });
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ 
+      message: 'Database error creating new user' 
+    });
+  }
 };
+
+// Login user
 export const login = async (req, res) => {
-  console.log("Login called with:", req.body);
+  try {
     const { email, password } = req.body;
 
-  // Check if user exists
-  const user = users.find((u) => u.email === email);
-  if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    console.log('Login attempt:', { email });
 
-  // Compare password
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) return res.status(400).json({ message: "Invalid credentials" });
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: 'Email and password are required' 
+      });
+    }
 
-  // Create JWT
-  const token = jwt.sign(
-    { id: user.id, email: user.email },
-    process.env.JWT_SECRET,
-    { expiresIn: "1h" }
-  );
+    // Authenticate with Supabase
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      console.error('Supabase login error:', error);
+      return res.status(401).json({ 
+        message: error.message || 'Invalid credentials' 
+      });
+    }
+
+    if (!data.user || !data.session) {
+      return res.status(401).json({ 
+        message: 'Invalid credentials' 
+      });
+    }
+
+    // Get user profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    res.json({
+      message: 'Login successful',
+      token: data.session.access_token,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        name: profile?.name || data.user.user_metadata?.name || 'User',
+        profile_picture: profile?.profile_picture || null,
+        bio: profile?.bio || null
+      }
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error' 
+    });
+  }
+};
+
+// Google OAuth
+export const googleAuth = async (req, res) => {
+  try {
+    const { tokenId, profileObj } = req.body;
+
+    if (!profileObj) {
+      return res.status(400).json({ 
+        message: 'Google authentication data is required' 
+      });
+    }
+
+    // Create or get user
+    const { data, error } = await supabase.auth.admin.createUser({
+      email: profileObj.email,
+      user_metadata: {
+        name: profileObj.name,
+        picture: profileObj.picture,
+        google_id: profileObj.googleId
+      },
+      email_confirm: true
+    });
+
+    if (error && !error.message.includes('already registered')) {
+      console.error('Google auth error:', error);
+      return res.status(400).json({ 
+        message: error.message || 'Google authentication failed' 
+      });
+    }
+
+    // Create or update profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .upsert({
+        id: data?.user?.id || profileObj.googleId,
+        name: profileObj.name,
+        email: profileObj.email,
+        profile_picture: profileObj.picture,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    res.json({
+      message: 'Google authentication successful',
+      token: data?.session?.access_token || 'mock-token-' + Date.now(),
+      user: {
+        id: data?.user?.id || profileObj.googleId,
+        email: profileObj.email,
+        name: profileObj.name,
+        profile_picture: profileObj.picture,
+        bio: profile?.bio || ''
+      }
+    });
+
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error' 
+    });
+  }
+};
+
+// Get current user profile
+export const getProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      return res.status(404).json({ 
+        message: 'Profile not found' 
+      });
+    }
+
+    res.json({
+      user: {
+        id: profile.id,
+        email: req.user.email,
+        name: profile.name,
+        profile_picture: profile.profile_picture,
+        bio: profile.bio
+      }
+    });
+
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error' 
+    });
+  }
+};
+
+// Update user profile
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, bio, profile_picture } = req.body;
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .update({
+        name,
+        bio,
+        profile_picture,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ 
+        message: error.message || 'Failed to update profile' 
+      });
+    }
 
   res.json({
-    token,
-    user: { id: user.id, name: user.name, email: user.email },
-  });
+      message: 'Profile updated successfully',
+      user: {
+        id: profile.id,
+        email: req.user.email,
+        name: profile.name,
+        profile_picture: profile.profile_picture,
+        bio: profile.bio
+      }
+    });
+
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error' 
+    });
+  }
+};
+
+// Logout
+export const logout = async (req, res) => {
+  try {
+    res.json({ 
+      message: 'Logout successful' 
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error' 
+    });
+  }
 };

@@ -1,65 +1,263 @@
-let posts = []; // in-memory storage for now
+import { supabase } from '../config/supabase.js';
 
-export const createPost = (req, res) => {
-  const { title, content, tags, image } = req.body;
-  if (!title || !content) {
-    return res.status(400).json({ message: "Title and content are required" });
+// Get all posts
+export const getAllPosts = async (req, res) => {
+  try {
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        profiles:author_id (
+          id,
+          name,
+          profile_picture
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return res.status(500).json({ message: error.message });
+    }
+
+    res.json(posts);
+
+  } catch (error) {
+    console.error('Get all posts error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
+};
 
-  const newPost = {
-    id: posts.length + 1,
+// Get single post
+export const getPost = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: post, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        profiles:author_id (
+          id,
+          name,
+          profile_picture,
+          bio
+        )
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    res.json(post);
+
+  } catch (error) {
+    console.error('Get post error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Create new post
+export const createPost = async (req, res) => {
+  try {
+    const userId = req.user.id;
+  const { title, content, tags, image } = req.body;
+
+  if (!title || !content) {
+      return res.status(400).json({ 
+        message: 'Title and content are required' 
+      });
+    }
+
+    const { data: post, error } = await supabase
+      .from('posts')
+      .insert({
+        title,
+        content,
+        author_id: userId,
+        tags: tags || [],
+        image: image || null
+      })
+      .select(`
+        *,
+        profiles:author_id (
+          id,
+          name,
+          profile_picture
+        )
+      `)
+      .single();
+
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    res.status(201).json(post);
+
+  } catch (error) {
+    console.error('Create post error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Update post
+export const updatePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const { title, content, tags, image } = req.body;
+
+    // Check if user owns the post
+    const { data: existingPost, error: checkError } = await supabase
+      .from('posts')
+      .select('author_id')
+      .eq('id', id)
+      .single();
+
+    if (checkError) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    if (existingPost.author_id !== userId) {
+      return res.status(403).json({ message: 'Not authorized to update this post' });
+    }
+
+    const { data: post, error } = await supabase
+      .from('posts')
+      .update({
     title,
     content,
     tags: tags || [],
     image: image || null,
-    authorId: req.user.id, // from JWT
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select(`
+        *,
+        profiles:author_id (
+          id,
+          name,
+          profile_picture
+        )
+      `)
+      .single();
 
-  posts.push(newPost);
-  res.status(201).json(newPost);
-};
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
 
-export const getAllPosts = (req, res) => {
-  res.json(posts);
-};
+    res.json(post);
 
-export const getPostById = (req, res) => {
-  const id = Number(req.params.id);
-  const post = posts.find((p) => p.id === id);
-  if (!post) return res.status(404).json({ message: "Post not found" });
-  res.json(post);
-};
-
-export const updatePost = (req, res) => {
-  const id = Number(req.params.id);
-  const post = posts.find((p) => p.id === id);
-  if (!post) return res.status(404).json({ message: "Post not found" });
-
-  if (post.authorId !== req.user.id) {
-    return res.status(403).json({ message: "Not authorized to edit this post" });
+  } catch (error) {
+    console.error('Update post error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
-
-  const { title, content, tags, image } = req.body;
-  if (title) post.title = title;
-  if (content) post.content = content;
-  if (tags) post.tags = tags;
-  if (image) post.image = image;
-  post.updatedAt = new Date().toISOString();
-
-  res.json(post);
 };
 
-export const deletePost = (req, res) => {
-  const id = Number(req.params.id);
-  const index = posts.findIndex((p) => p.id === id);
-  if (index === -1) return res.status(404).json({ message: "Post not found" });
+// Delete post
+export const deletePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
 
-  if (posts[index].authorId !== req.user.id) {
-    return res.status(403).json({ message: "Not authorized to delete this post" });
+    // Check if user owns the post
+    const { data: existingPost, error: checkError } = await supabase
+      .from('posts')
+      .select('author_id')
+      .eq('id', id)
+      .single();
+
+    if (checkError) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    if (existingPost.author_id !== userId) {
+      return res.status(403).json({ message: 'Not authorized to delete this post' });
+    }
+
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    res.json({ message: 'Post deleted successfully' });
+
+  } catch (error) {
+    console.error('Delete post error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
+};
 
-  posts.splice(index, 1);
-  res.json({ message: "Post deleted successfully" });
+// Get user's posts
+export const getUserPosts = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        profiles:author_id (
+          id,
+          name,
+          profile_picture
+        )
+      `)
+      .eq('author_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return res.status(500).json({ message: error.message });
+    }
+
+    res.json(posts);
+
+  } catch (error) {
+    console.error('Get user posts error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Upload image
+export const uploadImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    const userId = req.user.id;
+    const file = req.file;
+    const fileExt = file.originalname.split('.').pop();
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('blog-images')
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype
+      });
+
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('blog-images')
+      .getPublicUrl(fileName);
+
+    res.json({
+      message: 'Image uploaded successfully',
+      imageUrl: publicUrl
+    });
+
+  } catch (error) {
+    console.error('Upload image error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 };
