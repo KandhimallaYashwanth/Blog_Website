@@ -1,0 +1,69 @@
+@import '../../styles/globals.scss';
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+
+  &.small {
+    padding: 1rem;
+
+    .spinner {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .loading-text {
+      font-size: 0.875rem;
+    }
+  }
+
+  &.medium {
+    padding: 2rem;
+
+    .spinner {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .loading-text {
+      font-size: 1rem;
+    }
+  }
+
+  &.large {
+    padding: 4rem;
+
+    .spinner {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .loading-text {
+      font-size: 1.125rem;
+    }
+  }
+
+  .spinner {
+    border: 2px solid var(--border-color);
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+
+  .loading-text {
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin: 0;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
