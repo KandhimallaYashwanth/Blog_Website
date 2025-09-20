@@ -19,7 +19,6 @@ app.get("/", (req, res) => {
 
 // Auth routes
 app.use("/api/auth", authRoutes);
-
 app.use("/api/posts", postRoutes);
 
 // Start server after all routes are registered
