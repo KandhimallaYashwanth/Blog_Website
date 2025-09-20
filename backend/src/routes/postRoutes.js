@@ -1,5 +1,4 @@
 import express from "express";
-import { authMiddleware } from "../middleware/authMiddleware.js";
 import {
   createPost,
   getAllPosts,
@@ -7,13 +6,16 @@ import {
   updatePost,
   deletePost,
 } from "../controllers/postController.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Create post (protected)
-router.post("/", authMiddleware, createPost);
+// public routes
 router.get("/", getAllPosts);
 router.get("/:id", getPostById);
+
+// protected routes
+router.post("/", authMiddleware, createPost);
 router.put("/:id", authMiddleware, updatePost);
 router.delete("/:id", authMiddleware, deletePost);
 
