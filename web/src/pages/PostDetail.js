@@ -51,11 +51,7 @@ const PostDetail = () => {
 
   const isAuthor = isAuthenticated && user && currentPost && user.id === currentPost.author?.id;
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (error || !currentPost) {
+  if (error || (!currentPost && !loading)) {
     return (
       <div className="error-container">
         <h2>Post not found</h2>
@@ -115,7 +111,12 @@ const PostDetail = () => {
   return (
     <div className="post-detail">
       <div className="container">
-        <article className="post">
+        {loading && !currentPost ? (
+          <div className="loading-post">
+            <p>Loading post...</p>
+          </div>
+        ) : (
+          <article className="post">
           {currentPost.image && (
             <div className="post-image">
               <img src={currentPost.image} alt={currentPost.title} />
@@ -208,6 +209,7 @@ const PostDetail = () => {
             </div>
           </div>
         </article>
+        )}
       </div>
     </div>
   );

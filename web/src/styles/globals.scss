@@ -235,12 +235,26 @@ body {
   }
 }
 
-// Loading spinner
+// Loading states
 .loading-container {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 200px;
+}
+
+.loading-posts, .loading-post {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  
+  p {
+    margin: 0;
+    font-weight: 500;
+  }
 }
 
 .spinner {

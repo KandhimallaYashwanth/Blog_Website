@@ -82,9 +82,7 @@ const Profile = () => {
     }
   };
 
-  if (authLoading) {
-    return <LoadingSpinner />;
-  }
+  // Remove loading spinner - show profile immediately
 
   return (
     <div className="profile">
