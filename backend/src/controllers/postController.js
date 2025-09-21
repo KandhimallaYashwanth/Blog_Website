@@ -75,7 +75,30 @@ export const getPost = async (req, res) => {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    res.json(post);
+    // Increment views after fetching the post (this will return the updated post with incremented views)
+    console.log(`Attempting to increment views for post ID: ${id}`);
+    const { data: updatedPost, error: viewError } = await supabase
+      .rpc('increment_views', { post_id_param: id })
+      .select(`
+        id,
+        title,
+        content,
+        image,
+        likes,
+        views,
+        created_at,
+        updated_at
+      `); // Removed profiles and comments embedding from RPC select
+
+    if (viewError) {
+      console.error('Error incrementing post views:', viewError);
+      // Continue to send the original post data if view increment fails
+      return res.json(post);
+    }
+
+    console.log(`Successfully incremented views for post ID: ${id}. New views data:`, updatedPost[0]);
+    // Send the updated post data (with incremented views) back to the frontend
+    res.json(updatedPost[0]);
 
   } catch (error) {
     console.error('Get post error:', error);

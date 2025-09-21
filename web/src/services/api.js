@@ -81,6 +81,7 @@ export const postsAPI = {
   },
   
   getPost: async (postId) => {
+    console.log(`Frontend: Requesting post with ID: ${postId}`); // Added log
     return api.get(`/posts/${postId}`);
   },
   
