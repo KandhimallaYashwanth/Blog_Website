@@ -112,12 +112,6 @@ const Profile = () => {
                     <span className="stat-number">{userPosts.length}</span>
                     <span className="stat-label">Posts</span>
                   </div>
-                  <div className="stat">
-                    <span className="stat-number">
-                      {userPosts.reduce((total, post) => total + (post.likes || 0), 0)}
-                    </span>
-                    <span className="stat-label">Total Likes</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -202,7 +196,7 @@ const Profile = () => {
             </div>
           )}
 
-          <div className="user-posts">
+          <div className="user-posts hide-on-profile-page">
             <h2>Your Posts</h2>
             
             {postsLoading ? (

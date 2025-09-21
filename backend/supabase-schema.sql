@@ -29,7 +29,7 @@ CREATE TABLE posts (
 );
 
 -- Create user_likes table to track likes by users
-CREATE TABLE user_likes (
+CREATE TABLE IF NOT EXISTS user_likes (
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
   PRIMARY KEY (user_id, post_id),
@@ -123,8 +123,8 @@ BEGIN
 
     UPDATE public.posts
     SET likes = likes - 1
-    WHERE id = post_id_param
-    RETURNING likes INTO _current_likes;
+    WHERE posts.id = post_id_param
+    RETURNING posts.likes INTO _current_likes;
   ELSE
     -- User has not liked, so like (increment likes and add entry)
     INSERT INTO public.user_likes (user_id, post_id)
@@ -132,14 +132,24 @@ BEGIN
 
     UPDATE public.posts
     SET likes = likes + 1
-    WHERE id = post_id_param
-    RETURNING likes INTO _current_likes;
+    WHERE posts.id = post_id_param
+    RETURNING posts.likes INTO _current_likes;
   END IF;
 
   -- Return the updated post to the frontend
-  RETURN QUERY SELECT *
+  RETURN QUERY SELECT 
+    posts.id,
+    posts.title,
+    posts.content,
+    posts.author_id,
+    posts.tags,
+    posts.image,
+    posts.likes,
+    posts.views,
+    posts.created_at,
+    posts.updated_at
   FROM public.posts
-  WHERE id = post_id_param;
+  WHERE posts.id = post_id_param;
 END;
 $$
 

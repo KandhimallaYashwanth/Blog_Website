@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import PostDetail from './pages/PostDetail';
 import Profile from './pages/Profile';
+import MyPosts from './pages/MyPosts'; // Import MyPosts
 import CreatePost from './pages/CreatePost';
 import EditPost from './pages/EditPost';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
@@ -33,6 +34,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/my-posts" 
+            element={
+              <ProtectedRoute>
+                <MyPosts />
               </ProtectedRoute>
             } 
           />

@@ -224,7 +224,8 @@ const postsSlice = createSlice({
       })
       // Add Comment
       .addCase(addComment.fulfilled, (state, action) => {
-        if (state.currentPost && state.currentPost.id === action.payload.postId) {
+        // The action.payload is the new comment object returned from the backend
+        if (state.currentPost && state.currentPost.id === action.payload.post_id) {
           state.currentPost.comments.push(action.payload);
         }
       });

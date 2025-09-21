@@ -32,7 +32,8 @@ const Login = () => {
   };
 
   const handleGoogleSuccess = (googleData) => {
-    dispatch(googleAuth(googleData));
+    // The GoogleAuth component now returns an object with `tokenId` which is the `id_token`
+    dispatch(googleAuth({ id_token: googleData.tokenId }));
   };
 
   const handleGoogleFailure = (error) => {

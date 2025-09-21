@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import './PostCard.scss';
 
-const PostCard = ({ post }) => {
+const PostCard = ({ post, onDelete, onEdit }) => {
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown date';
     const date = new Date(dateString);
@@ -29,8 +29,8 @@ const PostCard = ({ post }) => {
       
       <div className="post-content">
         <div className="post-meta">
-          <span className="author">By {post.author?.name || 'Unknown'}</span>
-          <span className="date">{formatDate(post.createdAt)}</span>
+          <span className="author">By {post.profiles?.name || 'Unknown Author'}</span>
+          <span className="date">{formatDate(post.created_at)}</span>
         </div>
         
         <h2 className="post-title">
@@ -48,9 +48,29 @@ const PostCard = ({ post }) => {
         )}
         
         <div className="post-footer">
-          <Link to={`/post/${post.id}`} className="read-more">
-            Read More
-          </Link>
+          <div className="post-footer-top">
+            <div className="post-stats">
+              <span>❤️ {post.likes || 0}</span>
+              <span>💬 {post.comments?.length || 0}</span>
+            </div>
+            <Link to={`/post/${post.id}`} className="read-more">
+              Read More
+            </Link>
+          </div>
+          <div className="post-footer-bottom">
+            <div className="post-actions">
+              {onEdit && (
+                <button onClick={onEdit} className="edit-post-btn">
+                  Edit
+                </button>
+              )}
+              {onDelete && (
+                <button onClick={() => onDelete(post.id)} className="delete-post-btn">
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </article>

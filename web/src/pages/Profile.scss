@@ -301,6 +301,10 @@
 }
 
 .user-posts {
+  &.hide-on-profile-page {
+    display: none;
+  }
+
   h2 {
     font-size: 2rem;
     font-weight: 800;
