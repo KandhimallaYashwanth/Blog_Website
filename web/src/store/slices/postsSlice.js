@@ -169,11 +169,11 @@ const postsSlice = createSlice({
       })
       .addCase(updatePost.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.posts.findIndex(post => post._id === action.payload._id);
+        const index = state.posts.findIndex(post => post.id === action.payload.id);
         if (index !== -1) {
           state.posts[index] = action.payload;
         }
-        if (state.currentPost && state.currentPost._id === action.payload._id) {
+        if (state.currentPost && state.currentPost.id === action.payload.id) {
           state.currentPost = action.payload;
         }
         state.error = null;
@@ -189,8 +189,8 @@ const postsSlice = createSlice({
       })
       .addCase(deletePost.fulfilled, (state, action) => {
         state.loading = false;
-        state.posts = state.posts.filter(post => post._id !== action.payload);
-        if (state.currentPost && state.currentPost._id === action.payload) {
+        state.posts = state.posts.filter(post => post.id !== action.payload);
+        if (state.currentPost && state.currentPost.id === action.payload) {
           state.currentPost = null;
         }
         state.error = null;
@@ -227,6 +227,10 @@ const postsSlice = createSlice({
       .addCase(addComment.fulfilled, (state, action) => {
         // The action.payload is the new comment object returned from the backend
         if (state.currentPost && state.currentPost.id === action.payload.post_id) {
+          // Ensure comments array exists before pushing
+          if (!state.currentPost.comments) {
+            state.currentPost.comments = [];
+          }
           state.currentPost.comments.push(action.payload);
         }
       });

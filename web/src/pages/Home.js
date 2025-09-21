@@ -29,10 +29,6 @@ const Home = () => {
     return matchesTitle || matchesAuthor || matchesTags || matchesContent;
   });
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
   if (error) {
     return (
       <div className="error-container">
@@ -55,7 +51,11 @@ const Home = () => {
 
         <SearchBar onSearch={handleSearch} /> {/* Integrate SearchBar */}
 
-        {filteredPosts.length === 0 && searchTerm ? (
+        {loading && posts.length === 0 ? (
+          <div className="loading-posts">
+            <p>Loading posts...</p>
+          </div>
+        ) : filteredPosts.length === 0 && searchTerm ? (
           <div className="no-posts-found">
             <p>No posts found matching "{searchTerm}".</p>
           </div>

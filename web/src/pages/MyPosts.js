@@ -45,16 +45,18 @@ const MyPosts = () => {
     }
   };
 
-  if (authLoading || postsLoading) {
-    return <LoadingSpinner />;
-  }
+  // Remove loading spinner - show content immediately
 
   return (
     <div className="my-posts">
       <div className="container">
         <h1>My Posts</h1>
 
-        {userPosts.length === 0 ? (
+        {postsLoading && userPosts.length === 0 ? (
+          <div className="loading-posts">
+            <p>Loading your posts...</p>
+          </div>
+        ) : userPosts.length === 0 ? (
           <div className="no-posts">
             <p>You haven't written any posts yet.</p>
             <Link to="/create" className="create-first-btn">
