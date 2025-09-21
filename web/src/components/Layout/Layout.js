@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { logout } from '../../store/slices/authSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
-import DemoMode from '../DemoMode/DemoMode';
 import './Layout.scss';
 
 const Layout = ({ children }) => {
@@ -33,13 +32,12 @@ const Layout = ({ children }) => {
 
   return (
     <div className="layout">
-      <DemoMode />
       <header className="header">
         <div className="container">
           <div className="header-content">
-            <Link to="/" className="logo" onClick={closeMobileMenu}>
+            <NavLink to="/" className="logo" onClick={closeMobileMenu}>
               BlogSphere
-            </Link>
+            </NavLink>
             
             {/* Mobile menu button */}
             <button 
@@ -54,11 +52,12 @@ const Layout = ({ children }) => {
             
             {/* Desktop navigation */}
             <nav className="nav desktop-nav">
-              <Link to="/" className="nav-link">Home</Link>
+              <NavLink to="/" className="nav-link" end>Home</NavLink>
               {isAuthenticated ? (
                 <>
-                  <Link to="/create" className="nav-link">Create Post</Link>
-                  <Link to="/profile" className="nav-link">Profile</Link>
+                  <NavLink to="/create" className="nav-link">Create Post</NavLink>
+                  <NavLink to="/my-posts" className="nav-link">My Posts</NavLink>
+                  <NavLink to="/profile" className="nav-link">Profile</NavLink>
                   <div className="user-menu">
                     <span className="user-name">Hi, {user?.name}</span>
                     <button onClick={handleLogout} className="logout-btn">
@@ -68,8 +67,8 @@ const Layout = ({ children }) => {
                 </>
               ) : (
                 <>
-                  <Link to="/login" className="nav-link">Login</Link>
-                  <Link to="/signup" className="nav-link">Signup</Link>
+                  <NavLink to="/login" className="nav-link">Login</NavLink>
+                  <NavLink to="/signup" className="nav-link">Signup</NavLink>
                 </>
               )}
             </nav>
@@ -77,11 +76,12 @@ const Layout = ({ children }) => {
           
           {/* Mobile navigation */}
           <nav className={`nav mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
-            <Link to="/" className="nav-link" onClick={closeMobileMenu}>Home</Link>
+            <NavLink to="/" className="nav-link" onClick={closeMobileMenu} end>Home</NavLink>
             {isAuthenticated ? (
               <>
-                <Link to="/create" className="nav-link" onClick={closeMobileMenu}>Create Post</Link>
-                <Link to="/profile" className="nav-link" onClick={closeMobileMenu}>Profile</Link>
+                <NavLink to="/create" className="nav-link" onClick={closeMobileMenu}>Create Post</NavLink>
+                <NavLink to="/my-posts" className="nav-link" onClick={closeMobileMenu}>My Posts</NavLink>
+                <NavLink to="/profile" className="nav-link" onClick={closeMobileMenu}>Profile</NavLink>
                 <div className="user-menu">
                   <span className="user-name">Hi, {user?.name}</span>
                   <button onClick={handleLogout} className="logout-btn">
@@ -91,8 +91,8 @@ const Layout = ({ children }) => {
               </>
             ) : (
               <>
-                <Link to="/login" className="nav-link" onClick={closeMobileMenu}>Login</Link>
-                <Link to="/signup" className="nav-link" onClick={closeMobileMenu}>Signup</Link>
+                <NavLink to="/login" className="nav-link" onClick={closeMobileMenu}>Login</NavLink>
+                <NavLink to="/signup" className="nav-link" onClick={closeMobileMenu}>Signup</NavLink>
               </>
             )}
           </nav>

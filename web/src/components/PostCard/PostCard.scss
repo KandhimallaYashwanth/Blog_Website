@@ -2,12 +2,16 @@
 
 .post-card {
   background: var(--surface-color);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl); /* Larger border-radius */
+  box-shadow: var(--shadow-xl); /* More pronounced shadow */
+  border: 1px solid var(--border-light); /* Lighter border */
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  display: flex; /* Use flexbox for layout control */
+  flex-direction: column;
+  height: 100%; /* Ensure cards take full height in a grid */
+  padding: 0.75rem 1.25rem; /* Reduced top/bottom padding to 12px (0.75rem), kept horizontal at 20px */
 
   &::before {
     content: '';
@@ -50,25 +54,31 @@
 }
 
 .post-content {
-  padding: 2rem;
+  padding: 0; /* Removed internal padding, now handled by .post-card */
   position: relative;
   z-index: 2;
+  flex-grow: 1; /* Allow content to grow */
+  display: flex;
+  flex-direction: column;
 }
 
 .post-meta {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
+  gap: 0.75rem; /* Adjusted gap */
+  margin-bottom: 0.75rem; /* 12px vertical spacing between header and title */
+  font-size: 0.85rem; /* Slightly smaller font size */
   color: var(--text-muted);
 
   .author {
-    font-weight: 500;
-    color: var(--text-secondary);
+    font-weight: 600; /* Bolder author name */
+    color: var(--primary-color); /* Highlight author name */
   }
 
   .date {
+    font-style: italic; /* Italic date */
+    color: var(--text-secondary); /* More subtle date color */
+
     &::before {
       content: '•';
       margin-right: 0.5rem;
@@ -77,14 +87,14 @@
 }
 
 .post-title {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem; /* 12px vertical spacing between title and content */
 
   a {
     color: var(--text-primary);
     text-decoration: none;
-    font-size: 1.25rem;
-    font-weight: 600;
-    line-height: 1.4;
+    font-size: 1.5rem; /* Larger font size */
+    font-weight: 800; /* Bolder font weight */
+    line-height: 1.3;
     transition: color 0.2s ease-in-out;
 
     &:hover {
@@ -96,39 +106,124 @@
 .post-excerpt {
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem; /* Adjusted for overall footer spacing */
+  flex-grow: 1; /* Allow excerpt to grow */
 }
 
 .post-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-top: 0.75rem; /* Adjusted margin */
   margin-bottom: 1rem;
 
   .tag {
-    background-color: var(--surface-color);
-    color: var(--text-secondary);
-    padding: 0.25rem 0.75rem;
+    background-color: var(--surface-secondary);
+    color: var(--primary-dark);
+    padding: 0.3rem 0.8rem;
     border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: 0.7rem;
+    font-weight: 600;
     border: 1px solid var(--border-color);
   }
 }
 
 .post-footer {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column; /* Stack top and bottom sections */
+  margin-top: auto;
+  padding: 1rem 1.25rem 1.25rem; /* Adjusted padding: top, horizontal, bottom */
+  border-top: 1px solid var(--border-light);
+  gap: 1rem; /* Space between top and bottom footer sections */
+
+  .post-footer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .post-footer-bottom {
+    display: flex;
+    justify-content: flex-end; /* Align action buttons to the right */
+    align-items: center; /* Vertically center items in this row */
+    width: 100%;
+    margin-top: 0.5rem; /* Adjusted margin to be slightly smaller */
+  }
+
+  .post-stats {
+    display: flex;
+    gap: 0.75rem;
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      background-color: var(--surface-secondary);
+      padding: 0.4rem 0.8rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+
+      &:first-child {
+        color: var(--error-color);
+      }
+
+      &:nth-child(2) {
+        color: var(--primary-color);
+      }
+    }
+  }
 
   .read-more {
-    color: var(--primary-color);
+    @extend .btn;
+    @extend .btn-primary;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 700;
     text-decoration: none;
-    font-weight: 500;
-    font-size: 0.875rem;
-    transition: color 0.2s ease-in-out;
+    border-radius: var(--radius-md);
+    /* Removed margin-left: auto; */
 
     &:hover {
-      color: var(--primary-dark);
+      color: white;
+    }
+  }
+
+  .post-actions {
+    display: flex;
+    flex-direction: row; /* Ensure buttons are side-by-side within their container */
+    gap: 0.75rem; /* Adjusted gap for buttons */
+    align-items: center;
+    /* No margin-left: auto here as the parent .post-footer-bottom handles alignment */
+  }
+
+  .delete-post-btn,
+  .edit-post-btn {
+    @extend .btn;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+  }
+
+  .delete-post-btn {
+    background-color: var(--error-color);
+    color: var(--white-color);
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  .edit-post-btn {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+
+    &:hover {
+      opacity: 0.9;
     }
   }
 }
@@ -139,6 +234,7 @@
     &:hover {
       transform: translateY(-4px) scale(1.01);
     }
+    padding: 0.5rem 1rem; /* Reduced top/bottom padding for tablets to 8px (0.5rem), kept horizontal at 16px */
   }
 
   .post-image {
@@ -146,7 +242,7 @@
   }
 
   .post-content {
-    padding: 1.5rem;
+    padding: 1rem; /* Consistent padding for tablets (16px) */
   }
 
   .post-title a {
@@ -172,7 +268,7 @@
   }
 
   .post-content {
-    padding: 1.25rem;
+    padding: 0; /* No internal padding, handled by .post-card */
   }
 
   .post-meta {
@@ -208,11 +304,19 @@
   .post-footer .read-more {
     font-size: 0.8rem;
   }
+
+  .post-footer {
+    padding: 0.5rem 1rem 1rem; /* Adjusted footer padding for smaller screens (8px top, 16px horizontal, 16px bottom) */
+
+    .post-footer-bottom {
+      margin-top: 0.4rem;
+    }
+  }
 }
 
 @media (max-width: 360px) {
   .post-content {
-    padding: 1rem;
+    padding: 0; /* No internal padding, handled by .post-card */
   }
 
   .post-image {
@@ -225,5 +329,47 @@
 
   .post-excerpt {
     font-size: 0.85rem;
+  }
+
+  .post-footer {
+    flex-direction: column;
+    align-items: flex-start; /* Align entire footer to the start */
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem 0.75rem; /* Adjusted footer padding for very small screens (8px top, 12px horizontal, 12px bottom) */
+
+    .post-footer-top {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .post-footer-bottom {
+      flex-direction: row; /* Keep buttons side by side */
+      justify-content: flex-end; /* Align buttons to the right */
+      width: 100%;
+      margin-top: 0.5rem; /* Maintain separation */
+    }
+
+    .post-stats {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .read-more {
+      margin-left: 0;
+      align-self: flex-end;
+    }
+
+    .post-actions {
+      width: 100%;
+      flex-direction: row;
+      justify-content: flex-end;
+      gap: 0.5rem;
+
+      .delete-post-btn,
+      .edit-post-btn {
+        flex-grow: 1;
+      }
+    }
   }
 }
