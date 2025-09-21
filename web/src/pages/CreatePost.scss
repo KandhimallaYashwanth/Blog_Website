@@ -2,7 +2,7 @@
 
 .create-post {
   .form-container {
-    max-width: 900px;
+    max-width: 700px; /* Reduced from 900px */
     margin: 0 auto;
     background: var(--surface-color);
     padding: 3rem;
@@ -74,7 +74,7 @@
     }
 
     textarea {
-      min-height: 350px;
+      min-height: 200px; /* Reduced min-height for content textarea */
       resize: vertical;
       line-height: 1.7;
     }

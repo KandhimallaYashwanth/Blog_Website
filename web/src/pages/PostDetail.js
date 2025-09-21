@@ -161,14 +161,15 @@ const PostDetail = () => {
           </div>
 
           <div className="post-interactions">
-            <div className="likes">
+            <div className="likes-container">
               <button 
                 onClick={handleLike}
                 disabled={!isAuthenticated}
                 className="like-btn"
               >
-                ❤️ {currentPost.likes}
+                ❤️
               </button>
+              <span className="like-count">{currentPost.likes} Likes</span>
             </div>
 
             <div className="comments-section">
@@ -192,15 +193,9 @@ const PostDetail = () => {
                   currentPost.comments.map((comment) => (
                     <div key={comment.id} className="comment-item">
                       <div className="comment-author">
-                        {comment.profiles?.profile_picture ? (
-                          <img src={comment.profiles.profile_picture} alt={comment.profiles.name} className="comment-avatar" />
-                        ) : (
-                          <span className="comment-avatar-placeholder">{comment.profiles?.name?.charAt(0).toUpperCase()}</span>
-                        )}
                         <strong>{comment.profiles?.name || 'Unknown'}</strong>
                       </div>
                       <p className="comment-content">{comment.content}</p>
-                      <span className="comment-date">{formatDate(comment.created_at)}</span>
                     </div>
                   ))
                 ) : (
