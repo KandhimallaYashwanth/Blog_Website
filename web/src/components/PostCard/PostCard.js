@@ -52,6 +52,7 @@ const PostCard = ({ post, onDelete, onEdit }) => {
             <div className="post-stats">
               <span>❤️ {post.likes || 0}</span>
               <span>💬 {post.comments?.length || 0}</span>
+              <span>👀 {post.views || 0}</span> {/* Display views here */}
             </div>
             <Link to={`/post/${post.id}`} className="read-more">
               Read More

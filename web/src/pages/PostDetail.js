@@ -15,11 +15,13 @@ const PostDetail = () => {
   const { currentPost, loading, error } = useSelector((state) => state.posts);
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const [newComment, setNewComment] = useState('');
+  const fetchedRef = React.useRef(false); // Add a ref to track if fetch has been made
 
   useEffect(() => {
-    if (id) {
+    if (id && !fetchedRef.current) {
       dispatch(fetchPost(id));
-    } else {
+      fetchedRef.current = true; // Mark as fetched
+    } else if (!id) {
       toast.error('Invalid post ID provided.');
       navigate('/'); // Redirect to home or a suitable error page
     }
@@ -170,6 +172,7 @@ const PostDetail = () => {
                 ❤️
               </button>
               <span className="like-count">{currentPost.likes} Likes</span>
+              <span className="post-views">👀 {currentPost.views || 0} Views</span> {/* Display views here */}
             </div>
 
             <div className="comments-section">

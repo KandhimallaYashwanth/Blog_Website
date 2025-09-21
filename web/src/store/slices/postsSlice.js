@@ -140,6 +140,7 @@ const postsSlice = createSlice({
       })
       .addCase(fetchPost.fulfilled, (state, action) => {
         state.loading = false;
+        // Ensure the entire updated post object, including incremented views, is set
         state.currentPost = action.payload;
         state.error = null;
       })

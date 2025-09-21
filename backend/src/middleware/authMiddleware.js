@@ -15,7 +15,8 @@ export const authenticateToken = async (req, res, next) => {
 
     if (error) {
       console.error('Supabase auth.getUser error:', error.message);
-      return res.status(403).json({ message: `Authentication failed: ${error.message}` });
+      // Changed status from 403 to 401 for authentication failures, including expired tokens
+      return res.status(401).json({ message: `Authentication failed: ${error.message}` });
     }
 
     if (!user) {

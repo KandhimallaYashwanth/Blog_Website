@@ -134,12 +134,12 @@ const EditPost = () => {
               <label htmlFor="content">Content</label>
               <textarea
                 id="content"
-                rows="15"
+                rows="10" /* Reduced rows for smaller height */
                 {...register('content', {
                   required: 'Content is required',
                   minLength: {
-                    value: 50,
-                    message: 'Content must be at least 50 characters'
+                    value: 30, /* Changed from 50 to 30 characters */
+                    message: 'Content must be at least 30 characters'
                   }
                 })}
                 placeholder="Write your post content here..."

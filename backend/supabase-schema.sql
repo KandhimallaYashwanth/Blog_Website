@@ -153,6 +153,35 @@ BEGIN
 END;
 $$
 
+-- Function to increment post views
+CREATE OR REPLACE FUNCTION public.increment_views(
+  post_id_param UUID
+)
+RETURNS TABLE (id UUID, title TEXT, content TEXT, author_id UUID, tags TEXT[], image TEXT, likes INTEGER, views INTEGER, created_at TIMESTAMP WITH TIME ZONE, updated_at TIMESTAMP WITH TIME ZONE) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE public.posts
+  SET views = posts.views + 1
+  WHERE posts.id = post_id_param;
+
+  RETURN QUERY SELECT 
+    posts.id,
+    posts.title,
+    posts.content,
+    posts.author_id,
+    posts.tags,
+    posts.image,
+    posts.likes,
+    posts.views,
+    posts.created_at,
+    posts.updated_at
+  FROM public.posts
+  WHERE posts.id = post_id_param;
+END;
+$$
+
 -- Triggers for updated_at
 CREATE TRIGGER handle_updated_at_profiles
   BEFORE UPDATE ON profiles
