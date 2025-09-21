@@ -4,8 +4,14 @@ import { formatDistanceToNow } from 'date-fns';
 import './PostCard.scss';
 
 const PostCard = ({ post }) => {
-  const formatDate = (date) => {
-    return formatDistanceToNow(new Date(date), { addSuffix: true });
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown date';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      console.error('Invalid date string provided:', dateString);
+      return 'Invalid date';
+    }
+    return formatDistanceToNow(date, { addSuffix: true });
   };
 
   const truncateContent = (content, maxLength = 150) => {
@@ -28,7 +34,7 @@ const PostCard = ({ post }) => {
         </div>
         
         <h2 className="post-title">
-          <Link to={`/post/${post._id}`}>{post.title}</Link>
+          <Link to={`/post/${post.id}`}>{post.title}</Link>
         </h2>
         
         <p className="post-excerpt">{truncateContent(post.content)}</p>
@@ -42,7 +48,7 @@ const PostCard = ({ post }) => {
         )}
         
         <div className="post-footer">
-          <Link to={`/post/${post._id}`} className="read-more">
+          <Link to={`/post/${post.id}`} className="read-more">
             Read More
           </Link>
         </div>
