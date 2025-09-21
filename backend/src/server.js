@@ -16,21 +16,25 @@ app.use(helmet());
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100,                  // limit each IP to 100 requests per windowMs
 });
 app.use(limiter);
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  origin: [
+    "http://localhost:3000",                     // Local development
+    "https://blogsphere-frontend-64j6.onrender.com", // Production frontend
+    process.env.CORS_ORIGIN                        // Optional origin from .env
+  ].filter(Boolean),
   credentials: true,
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Health check route
 app.get("/", (req, res) => {
@@ -50,7 +54,7 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ 
     message: "Something went wrong!",
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    error: process.env.NODE_ENV === "development" ? err.message : undefined
   });
 });
 
@@ -62,5 +66,5 @@ app.use("*", (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 BlogSphere Backend running on http://localhost:${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
 });
