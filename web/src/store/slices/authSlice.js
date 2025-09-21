@@ -1,14 +1,31 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authAPI } from '../../services/api';
 
+// Helper to safely parse user from localStorage
+const loadUserFromLocalStorage = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && user.id) { // Change to user.id
+      return user;
+    }
+  } catch (error) {
+    console.error('Failed to parse user from localStorage', error);
+  }
+  return null;
+};
+
 // Async thunks
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const response = await authAPI.login(email, password);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Login failed');
@@ -21,8 +38,12 @@ export const registerUser = createAsyncThunk(
   async ({ name, email, password }, { rejectWithValue }) => {
     try {
       const response = await authAPI.register(name, email, password);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Registration failed');
@@ -35,8 +56,12 @@ export const googleAuth = createAsyncThunk(
   async (googleData, { rejectWithValue }) => {
     try {
       const response = await authAPI.googleAuth(googleData);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Google authentication failed');
@@ -49,7 +74,7 @@ export const updateProfile = createAsyncThunk(
   async ({ userId, ...profileData }, { rejectWithValue }) => {
     try {
       const response = await authAPI.updateProfile(profileData);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('user', JSON.stringify(response.data.user)); // Update user in localStorage after profile update
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Profile update failed');
@@ -58,7 +83,7 @@ export const updateProfile = createAsyncThunk(
 );
 
 const initialState = {
-  user: JSON.parse(localStorage.getItem('user')) || null,
+  user: loadUserFromLocalStorage(),
   token: localStorage.getItem('token') || null,
   isAuthenticated: !!localStorage.getItem('token'),
   loading: false,

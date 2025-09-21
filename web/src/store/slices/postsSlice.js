@@ -74,6 +74,30 @@ export const fetchUserPosts = createAsyncThunk(
   }
 );
 
+export const likePost = createAsyncThunk(
+  'posts/likePost',
+  async (postId, { rejectWithValue }) => {
+    try {
+      const response = await postsAPI.likePost(postId);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to like post');
+    }
+  }
+);
+
+export const addComment = createAsyncThunk(
+  'posts/addComment',
+  async ({ postId, content }, { rejectWithValue }) => {
+    try {
+      const response = await postsAPI.addComment(postId, content);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to add comment');
+    }
+  }
+);
+
 const initialState = {
   posts: [],
   currentPost: null,
@@ -187,6 +211,22 @@ const postsSlice = createSlice({
       .addCase(fetchUserPosts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // Like Post
+      .addCase(likePost.fulfilled, (state, action) => {
+        if (state.currentPost && state.currentPost.id === action.payload.id) {
+          state.currentPost.likes = action.payload.likes;
+        }
+        const index = state.posts.findIndex(post => post.id === action.payload.id);
+        if (index !== -1) {
+          state.posts[index].likes = action.payload.likes;
+        }
+      })
+      // Add Comment
+      .addCase(addComment.fulfilled, (state, action) => {
+        if (state.currentPost && state.currentPost.id === action.payload.postId) {
+          state.currentPost.comments.push(action.payload);
+        }
       });
   },
 });

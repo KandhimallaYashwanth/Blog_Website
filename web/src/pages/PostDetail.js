@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchPost, deletePost, clearCurrentPost } from '../store/slices/postsSlice';
 import { formatDistanceToNow } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 import './PostDetail.scss';
+import { likePost, addComment } from '../store/slices/postsSlice';
+import { toast } from 'react-toastify';
 
 const PostDetail = () => {
   const { id } = useParams();
@@ -12,14 +14,20 @@ const PostDetail = () => {
   const navigate = useNavigate();
   const { currentPost, loading, error } = useSelector((state) => state.posts);
   const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
-    dispatch(fetchPost(id));
+    if (id) {
+      dispatch(fetchPost(id));
+    } else {
+      toast.error('Invalid post ID provided.');
+      navigate('/'); // Redirect to home or a suitable error page
+    }
     
     return () => {
       dispatch(clearCurrentPost());
     };
-  }, [dispatch, id]);
+  }, [dispatch, id, navigate]);
 
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this post?')) {
@@ -29,11 +37,17 @@ const PostDetail = () => {
     }
   };
 
-  const formatDate = (date) => {
-    return formatDistanceToNow(new Date(date), { addSuffix: true });
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown date';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      console.error('Invalid date string provided to PostDetail:', dateString);
+      return 'Invalid date';
+    }
+    return formatDistanceToNow(date, { addSuffix: true });
   };
 
-  const isAuthor = isAuthenticated && user && currentPost && user._id === currentPost.author?._id;
+  const isAuthor = isAuthenticated && user && currentPost && user.id === currentPost.author?.id;
 
   if (loading) {
     return <LoadingSpinner />;
@@ -51,6 +65,51 @@ const PostDetail = () => {
     );
   }
 
+  const handleLike = () => {
+    if (!isAuthenticated) {
+      toast.error('You need to be logged in to like posts.');
+      navigate('/login');
+      return;
+    }
+    if (!currentPost || !currentPost.id) {
+      toast.error('Post data is missing.');
+      return;
+    }
+    dispatch(likePost(currentPost.id)).then((result) => {
+      if (result.type.endsWith('fulfilled')) {
+        toast.success('Post liked!');
+      } else {
+        toast.error(result.payload || 'Failed to like post');
+      }
+    });
+  };
+
+  const handleCommentSubmit = (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error('You need to be logged in to comment.');
+      navigate('/login');
+      return;
+    }
+    if (!currentPost || !currentPost.id) {
+      toast.error('Post data is missing.');
+      return;
+    }
+    if (!newComment.trim()) {
+      toast.error('Comment cannot be empty.');
+      return;
+    }
+
+    dispatch(addComment({ postId: currentPost.id, content: newComment })).then((result) => {
+      if (result.type.endsWith('fulfilled')) {
+        toast.success('Comment added!');
+        setNewComment('');
+      } else {
+        toast.error(result.payload || 'Failed to add comment');
+      }
+    });
+  };
+
   return (
     <div className="post-detail">
       <div className="container">
@@ -62,18 +121,18 @@ const PostDetail = () => {
           )}
           
           <header className="post-header">
-            <h1 className="post-title">{currentPost.title}</h1>
+            <h1 className="post-title">{currentPost.title || 'Untitled Post'}</h1>
             
             <div className="post-meta">
               <div className="author-info">
-                <span className="author-name">{currentPost.author?.name || 'Unknown'}</span>
-                <span className="post-date">{formatDate(currentPost.createdAt)}</span>
+                <span className="author-name">By {currentPost.profiles?.name || 'Unknown Author'}</span>
+                <span className="post-date">{formatDate(currentPost.created_at)}</span>
               </div>
               
               {isAuthor && (
                 <div className="post-actions">
                   <button 
-                    onClick={() => navigate(`/edit/${currentPost._id}`)}
+                    onClick={() => navigate(`/edit/${currentPost.id}`)}
                     className="edit-btn"
                   >
                     Edit
@@ -87,7 +146,7 @@ const PostDetail = () => {
                 </div>
               )}
             </div>
-            
+
             {currentPost.tags && currentPost.tags.length > 0 && (
               <div className="post-tags">
                 {currentPost.tags.map((tag, index) => (
@@ -99,6 +158,56 @@ const PostDetail = () => {
           
           <div className="post-content">
             <div dangerouslySetInnerHTML={{ __html: currentPost.content.replace(/\n/g, '<br>') }} />
+          </div>
+
+          <div className="post-interactions">
+            <div className="likes">
+              <button 
+                onClick={handleLike}
+                disabled={!isAuthenticated}
+                className="like-btn"
+              >
+                ❤️ {currentPost.likes}
+              </button>
+            </div>
+
+            <div className="comments-section">
+              <h3>Comments ({currentPost.comments?.length || 0})</h3>
+              {isAuthenticated ? (
+                <form onSubmit={handleCommentSubmit} className="comment-form">
+                  <textarea
+                    placeholder="Add a comment..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    required
+                  ></textarea>
+                  <button type="submit" className="submit-comment-btn">Comment</button>
+                </form>
+              ) : (
+                <p>Please <Link to="/login">log in</Link> to comment.</p>
+              )}
+
+              <div className="comments-list">
+                {currentPost.comments && currentPost.comments.length > 0 ? (
+                  currentPost.comments.map((comment) => (
+                    <div key={comment.id} className="comment-item">
+                      <div className="comment-author">
+                        {comment.profiles?.profile_picture ? (
+                          <img src={comment.profiles.profile_picture} alt={comment.profiles.name} className="comment-avatar" />
+                        ) : (
+                          <span className="comment-avatar-placeholder">{comment.profiles?.name?.charAt(0).toUpperCase()}</span>
+                        )}
+                        <strong>{comment.profiles?.name || 'Unknown'}</strong>
+                      </div>
+                      <p className="comment-content">{comment.content}</p>
+                      <span className="comment-date">{formatDate(comment.created_at)}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p>No comments yet. Be the first to comment!</p>
+                )}
+              </div>
+            </div>
           </div>
         </article>
       </div>
