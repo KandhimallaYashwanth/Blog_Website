@@ -7,25 +7,48 @@ export const authenticateToken = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
     if (!token) {
-      return res.status(401).json({ message: 'Access token required' });
+      return res.status(401).json({ message: 'Authentication required: No token provided' });
     }
 
     // Verify token with Supabase
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
-    if (error || !user) {
-      return res.status(403).json({ message: 'Invalid or expired token' });
+    if (error) {
+      console.error('Supabase auth.getUser error:', error.message);
+      return res.status(403).json({ message: `Authentication failed: ${error.message}` });
+    }
+
+    if (!user) {
+      return res.status(403).json({ message: 'Authentication failed: Invalid or expired token' });
     }
 
     // Get user profile
-    const { data: profile, error: profileError } = await supabase
+    let { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single();
 
     if (profileError) {
-      return res.status(403).json({ message: 'User profile not found' });
+      console.warn('Auth middleware: User profile not found for ID', user.id, 'Attempting to create basic profile.', profileError.message);
+      // If profile not found, create a basic one
+      const { data: newProfile, error: newProfileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          name: user.user_metadata?.name || user.email, // Use name from metadata or email
+          email: user.email,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (newProfileError || !newProfile) {
+        console.error('Auth middleware: Failed to create new profile for user ID', user.id, newProfileError);
+        return res.status(500).json({ message: 'Failed to create user profile after authentication.' });
+      }
+      profile = newProfile; // Use the newly created profile
     }
 
     req.user = {
@@ -48,7 +71,18 @@ export const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const { data: { user }, error } = await supabase.auth.getUser(token);
-      
+
+      if (error) {
+        console.error('Supabase optionalAuth auth.getUser error:', error.message);
+        // Continue without user if token is invalid/expired in optional auth
+        return next();
+      }
+
+      if (!user) {
+        // If token exists but no user is found, it's an invalid token; continue without user
+        return next();
+      }
+
       if (!error && user) {
         const { data: profile } = await supabase
           .from('profiles')
