@@ -37,11 +37,28 @@ export const register = async (req, res) => {
       });
     }
 
+    // After creating the user, sign them in to get a session and access token
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      console.error('Supabase post-registration sign-in error:', signInError);
+      // Even if sign-in fails, the user is created, but we can't provide a session
+      return res.status(500).json({ message: signInError.message || 'Failed to sign in user after registration.' });
+    }
+
+    if (!signInData.session || !signInData.user) {
+      console.error('Supabase post-registration sign-in: No session or user data.', signInData);
+      return res.status(500).json({ message: 'Failed to retrieve session data after registration.' });
+    }
+
     // Create user profile in profiles table
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .insert({
-        id: data.user.id,
+        id: signInData.user.id,
         name: name,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -51,18 +68,18 @@ export const register = async (req, res) => {
 
     if (profileError) {
       console.error('Profile creation error:', profileError);
-      // Don't fail registration if profile creation fails
+      // Don't fail registration if profile creation fails, but log it
     }
 
-    // Generate a simple token for frontend
-    const token = data.session?.access_token || 'mock-token-' + Date.now();
+    // Use the access token from the sign-in data
+    const token = signInData.session.access_token;
 
-  res.status(201).json({
+    res.status(201).json({
       message: 'User created successfully',
       token: token,
       user: {
-        id: data.user.id,
-        email: data.user.email,
+        id: signInData.user.id,
+        email: signInData.user.email,
         name: name,
         profile_picture: null,
         bio: null
@@ -146,76 +163,72 @@ export const login = async (req, res) => {
 // Google OAuth
 export const googleAuth = async (req, res) => {
   try {
-    const { tokenId, profileObj } = req.body;
+    const { id_token } = req.body; // Expecting id_token from frontend
 
-    if (!profileObj) {
-      return res.status(400).json({ 
-        message: 'Google authentication data is required' 
+    if (!id_token) {
+      return res.status(400).json({
+        message: 'Google ID token is required'
       });
     }
 
-    // Create or get user
-    const { data, error } = await supabase.auth.admin.createUser({
-      email: profileObj.email,
-      user_metadata: {
-        name: profileObj.name,
-        picture: profileObj.picture,
-        google_id: profileObj.googleId
-      },
-      email_confirm: true
+    // Use Supabase client to sign in with ID token
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: id_token,
     });
 
-    if (error && !error.message.includes('already registered')) {
-      console.error('Google auth error:', error);
+    if (error) {
+      console.error('Supabase Google sign-in error:', error);
       return res.status(400).json({
         message: error.message || 'Google authentication failed'
       });
     }
 
-    // Ensure user data from Supabase is available
-    if (!data?.user?.id) {
-      // If user is already registered, supabase.auth.admin.createUser might not return user data
-      // Attempt to sign in to get the session and user data for existing users
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: profileObj.email,
-        password: process.env.GOOGLE_AUTH_DUMMY_PASSWORD || 'default_dummy_password' // Use a dummy password or handle differently
-      });
-
-      if (signInError || !signInData?.user?.id) {
-        console.error('Google auth: Failed to get user ID after create/signin', signInError);
-        return res.status(500).json({ message: 'Failed to retrieve user ID for Google authentication.' });
-      }
-      data.user = signInData.user;
-      data.session = signInData.session;
+    if (!data.session || !data.user) {
+      console.error('Google auth: Supabase returned no session or user data.', data);
+      return res.status(500).json({ message: 'Failed to retrieve session or user data from Supabase.' });
     }
 
-    // Create or update profile
-    const { data: profile, error: profileUpsertError } = await supabase
+    // Fetch or create profile if it doesn't exist
+    let { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .upsert({
-        id: data.user.id,
-        name: profileObj.name,
-        email: profileObj.email,
-        profile_picture: profileObj.picture,
-        updated_at: new Date().toISOString()
-      })
-      .select()
+      .select('*')
+      .eq('id', data.user.id)
       .single();
 
-    if (profileUpsertError || !profile) {
-      console.error('Google auth: Failed to upsert profile', profileUpsertError);
-      return res.status(500).json({ message: 'Failed to create or update Google profile.' });
-    }
+    if (profileError && profileError.code === 'PGRST116') { // PGRST116 means no rows found
+      // Profile doesn't exist, create it
+      const { data: newProfile, error: createProfileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          name: data.user.user_metadata?.name || data.user.email,
+          profile_picture: data.user.user_metadata?.picture || null,
+          email: data.user.email, // Add email to profile for consistency
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
+      if (createProfileError) {
+        console.error('Google auth: Failed to create profile for new user', createProfileError);
+        // Proceed without profile, but log error
+      }
+      profile = newProfile;
+    } else if (profileError) {
+      console.error('Google auth: Failed to fetch profile', profileError);
+      return res.status(500).json({ message: 'Failed to retrieve user profile.' });
+    }
+    
     res.json({
       message: 'Google authentication successful',
-      token: data.session?.access_token || 'mock-token-' + Date.now(),
+      token: data.session.access_token,
       user: {
         id: data.user.id,
-        email: profileObj.email,
-        name: profileObj.name,
-        profile_picture: profileObj.picture,
-        bio: profile.bio || ''
+        email: data.user.email,
+        name: profile?.name || data.user.user_metadata?.name || 'User',
+        profile_picture: profile?.profile_picture || data.user.user_metadata?.picture || null,
+        bio: profile?.bio || null
       }
     });
 

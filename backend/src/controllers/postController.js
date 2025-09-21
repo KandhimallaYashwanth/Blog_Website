@@ -6,12 +6,20 @@ export const getAllPosts = async (req, res) => {
     const { data: posts, error } = await supabase
       .from('posts')
       .select(`
-        *,
+        id,
+        title,
+        content,
+        image,
+        likes,
+        views,
+        created_at,
+        updated_at,
         profiles:author_id (
           id,
           name,
           profile_picture
-        )
+        ),
+        comments(id) // Select only id to count comments
       `)
       .order('created_at', { ascending: false });
 
@@ -39,14 +47,26 @@ export const getPost = async (req, res) => {
     const { data: post, error } = await supabase
       .from('posts')
       .select(`
-        *,
+        id,
+        title,
+        content,
+        image,
+        likes,
+        views,
+        created_at,
+        updated_at,
         profiles:author_id (
           id,
           name,
           profile_picture,
           bio
         ),
-        comments(*, profiles:author_id(id, name, profile_picture))
+        comments(
+          id,
+          content,
+          created_at,
+          profiles:author_id(id, name, profile_picture)
+        )
       `)
       .eq('id', id)
       .single();
@@ -85,7 +105,14 @@ export const createPost = async (req, res) => {
         image: image || null
       })
       .select(`
-        *,
+        id,
+        title,
+        content,
+        image,
+        likes,
+        views,
+        created_at,
+        updated_at,
         profiles:author_id (
           id,
           name,
@@ -115,13 +142,27 @@ export const likePost = async (req, res) => {
     if (!id || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) {
       return res.status(400).json({ message: 'Invalid post ID format' });
     }
+    if (!userId || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID format for liking' });
+    }
 
     // Check if the user has already liked the post (optional, depending on desired behavior)
     // For simplicity, we'll just increment/decrement for now.
 
     const { data: updatedPost, error } = await supabase
       .rpc('increment_likes', { post_id_param: id, user_id_param: userId })
-      .select();
+      .select(`
+        id,
+        title,
+        content,
+        author_id,
+        tags,
+        image,
+        likes,
+        views,
+        created_at,
+        updated_at
+      `);
 
     if (error) {
       console.error('Like post error:', error);
@@ -209,15 +250,22 @@ export const updatePost = async (req, res) => {
     const { data: post, error } = await supabase
       .from('posts')
       .update({
-    title,
-    content,
-    tags: tags || [],
-    image: image || null,
+        title,
+        content,
+        tags: tags || [],
+        image: image || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
       .select(`
-        *,
+        id,
+        title,
+        content,
+        image,
+        likes,
+        views,
+        created_at,
+        updated_at,
         profiles:author_id (
           id,
           name,
@@ -297,7 +345,14 @@ export const getUserPosts = async (req, res) => {
     const { data: posts, error } = await supabase
       .from('posts')
       .select(`
-        *,
+        id,
+        title,
+        content,
+        image,
+        likes,
+        views,
+        created_at,
+        updated_at,
         profiles:author_id (
           id,
           name,
