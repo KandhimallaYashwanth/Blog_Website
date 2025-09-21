@@ -5,13 +5,14 @@ import { useForm } from 'react-hook-form';
 import { createPost } from '../store/slices/postsSlice';
 import { postsAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import useAuth from '../hooks/useAuth'; // Import the useAuth hook
 import './CreatePost.scss';
 
 const CreatePost = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { user, isAuthenticated } = useAuth(); // Use the useAuth hook
   const { loading } = useSelector((state) => state.posts);
-  const { user } = useSelector((state) => state.auth);
   
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -42,8 +43,15 @@ const CreatePost = () => {
         imageUrl = uploadResponse.data.imageUrl;
       }
 
+      if (!isAuthenticated) {
+        toast.error('User not authenticated. Please log in to create a post.');
+        navigate('/login');
+        return;
+      }
+
       const postData = {
         ...data,
+        authorId: user.id, // Corrected to user.id
         tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
         image: imageUrl,
       };
@@ -51,7 +59,7 @@ const CreatePost = () => {
       dispatch(createPost(postData)).then((result) => {
         if (result.type.endsWith('fulfilled')) {
           toast.success('Post created successfully!');
-          navigate(`/post/${result.payload._id}`);
+          navigate(`/post/${result.payload.id}`); // Corrected to result.payload.id
         }
       });
     } catch (error) {

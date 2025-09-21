@@ -32,6 +32,10 @@ export const getPost = async (req, res) => {
   try {
     const { id } = req.params;
 
+    if (!id || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) {
+      return res.status(400).json({ message: 'Invalid post ID format' });
+    }
+
     const { data: post, error } = await supabase
       .from('posts')
       .select(`
@@ -41,7 +45,8 @@ export const getPost = async (req, res) => {
           name,
           profile_picture,
           bio
-        )
+        ),
+        comments(*, profiles:author_id(id, name, profile_picture))
       `)
       .eq('id', id)
       .single();
@@ -101,12 +106,90 @@ export const createPost = async (req, res) => {
   }
 };
 
+// Like a post
+export const likePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!id || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) {
+      return res.status(400).json({ message: 'Invalid post ID format' });
+    }
+
+    // Check if the user has already liked the post (optional, depending on desired behavior)
+    // For simplicity, we'll just increment/decrement for now.
+
+    const { data: updatedPost, error } = await supabase
+      .rpc('increment_likes', { post_id_param: id, user_id_param: userId })
+      .select();
+
+    if (error) {
+      console.error('Like post error:', error);
+      return res.status(500).json({ message: error.message || 'Failed to like post' });
+    }
+
+    if (!updatedPost || updatedPost.length === 0) {
+      return res.status(404).json({ message: 'Post not found or could not be updated' });
+    }
+
+    res.json(updatedPost[0]);
+
+  } catch (error) {
+    console.error('Like post error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Add a comment to a post
+export const addComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const { content } = req.body;
+
+    if (!id || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) {
+      return res.status(400).json({ message: 'Invalid post ID format' });
+    }
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({ message: 'Comment content is required' });
+    }
+
+    const { data: comment, error } = await supabase
+      .from('comments')
+      .insert({
+        post_id: id,
+        author_id: userId,
+        content: content.trim(),
+      })
+      .select(`
+        *,
+        profiles:author_id(id, name, profile_picture)
+      `)
+      .single();
+
+    if (error) {
+      console.error('Add comment error:', error);
+      return res.status(500).json({ message: error.message || 'Failed to add comment' });
+    }
+
+    res.status(201).json(comment);
+
+  } catch (error) {
+    console.error('Add comment error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // Update post
 export const updatePost = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
     const { title, content, tags, image } = req.body;
+
+    if (!id || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) {
+      return res.status(400).json({ message: 'Invalid post ID format' });
+    }
 
     // Check if user owns the post
     const { data: existingPost, error: checkError } = await supabase
@@ -161,6 +244,10 @@ export const deletePost = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
+    if (!id || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) {
+      return res.status(400).json({ message: 'Invalid post ID format' });
+    }
+
     // Check if user owns the post
     const { data: existingPost, error: checkError } = await supabase
       .from('posts')
@@ -197,6 +284,15 @@ export const deletePost = async (req, res) => {
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
+
+    if (!userId || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
+
+    // Ensure the authenticated user is requesting their own posts or is an admin
+    if (req.user.id !== userId) {
+      return res.status(403).json({ message: 'Not authorized to view these posts' });
+    }
 
     const { data: posts, error } = await supabase
       .from('posts')

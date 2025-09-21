@@ -18,9 +18,22 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
+
+    // Client-side validation for JWT token format
+    const isValidToken = token && /^[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.[A-Za-z0-9-_.+/=]*$/.test(token);
+
+    if (isValidToken) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (token) {
+      // Token exists but is malformed/invalid, clear session and redirect
+      console.error('Malformed or invalid JWT token detected on client side. Clearing session.');
+      toast.error('Your session is invalid. Please log in again.');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login'; // Redirect to login page
+      return Promise.reject(new axios.Cancel('Token is invalid, request cancelled.'));
     }
+    // If no token, or token is valid, proceed normally (backend will handle missing token or expiry)
     return config;
   },
   (error) => {
@@ -182,6 +195,20 @@ export const postsAPI = {
       }
     }
     return api.post('/posts/upload', imageData);
+  },
+
+  likePost: async (postId) => {
+    if (USE_MOCK_API) {
+      return mockPostsAPI.likePost(postId);
+    }
+    return api.post(`/posts/${postId}/like`);
+  },
+
+  addComment: async (postId, content) => {
+    if (USE_MOCK_API) {
+      return mockPostsAPI.addComment(postId, content);
+    }
+    return api.post(`/posts/${postId}/comment`, { content });
   },
 };
 

@@ -30,9 +30,10 @@ export const register = async (req, res) => {
       });
     }
 
-    if (!data.user) {
-      return res.status(400).json({ 
-        message: 'Failed to create user' 
+    if (!data.user || !data.user.id) {
+      console.error('Registration: Supabase returned no user or user ID.', data);
+      return res.status(500).json({
+        message: 'Failed to retrieve user ID after registration.'
       });
     }
 
@@ -42,7 +43,6 @@ export const register = async (req, res) => {
       .insert({
         id: data.user.id,
         name: name,
-        email: email,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -103,18 +103,25 @@ export const login = async (req, res) => {
       });
     }
 
-    if (!data.user || !data.session) {
-      return res.status(401).json({ 
-        message: 'Invalid credentials' 
+    if (!data.user || !data.user.id || !data.session) {
+      return res.status(401).json({
+        message: 'Invalid credentials or missing session data.'
       });
     }
 
     // Get user profile
-    const { data: profile } = await supabase
+    const { data: profile, error: profileFetchError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', data.user.id)
       .single();
+    
+    if (profileFetchError || !profile) {
+      console.error('Login: Failed to fetch user profile for user ID:', data.user.id, profileFetchError);
+      return res.status(500).json({
+        message: 'Failed to retrieve user profile after login.'
+      });
+    }
 
     res.json({
       message: 'Login successful',
@@ -122,9 +129,9 @@ export const login = async (req, res) => {
       user: {
         id: data.user.id,
         email: data.user.email,
-        name: profile?.name || data.user.user_metadata?.name || 'User',
-        profile_picture: profile?.profile_picture || null,
-        bio: profile?.bio || null
+        name: profile.name || data.user.user_metadata?.name || 'User',
+        profile_picture: profile.profile_picture || null,
+        bio: profile.bio || null
       }
     });
 
@@ -160,16 +167,33 @@ export const googleAuth = async (req, res) => {
 
     if (error && !error.message.includes('already registered')) {
       console.error('Google auth error:', error);
-      return res.status(400).json({ 
-        message: error.message || 'Google authentication failed' 
+      return res.status(400).json({
+        message: error.message || 'Google authentication failed'
       });
     }
 
+    // Ensure user data from Supabase is available
+    if (!data?.user?.id) {
+      // If user is already registered, supabase.auth.admin.createUser might not return user data
+      // Attempt to sign in to get the session and user data for existing users
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: profileObj.email,
+        password: process.env.GOOGLE_AUTH_DUMMY_PASSWORD || 'default_dummy_password' // Use a dummy password or handle differently
+      });
+
+      if (signInError || !signInData?.user?.id) {
+        console.error('Google auth: Failed to get user ID after create/signin', signInError);
+        return res.status(500).json({ message: 'Failed to retrieve user ID for Google authentication.' });
+      }
+      data.user = signInData.user;
+      data.session = signInData.session;
+    }
+
     // Create or update profile
-    const { data: profile } = await supabase
+    const { data: profile, error: profileUpsertError } = await supabase
       .from('profiles')
       .upsert({
-        id: data?.user?.id || profileObj.googleId,
+        id: data.user.id,
         name: profileObj.name,
         email: profileObj.email,
         profile_picture: profileObj.picture,
@@ -178,15 +202,20 @@ export const googleAuth = async (req, res) => {
       .select()
       .single();
 
+    if (profileUpsertError || !profile) {
+      console.error('Google auth: Failed to upsert profile', profileUpsertError);
+      return res.status(500).json({ message: 'Failed to create or update Google profile.' });
+    }
+
     res.json({
       message: 'Google authentication successful',
-      token: data?.session?.access_token || 'mock-token-' + Date.now(),
+      token: data.session?.access_token || 'mock-token-' + Date.now(),
       user: {
-        id: data?.user?.id || profileObj.googleId,
+        id: data.user.id,
         email: profileObj.email,
         name: profileObj.name,
         profile_picture: profileObj.picture,
-        bio: profile?.bio || ''
+        bio: profile.bio || ''
       }
     });
 

@@ -1,35 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { updateProfile } from '../store/slices/authSlice';
 import { fetchUserPosts } from '../store/slices/postsSlice';
 import PostCard from '../components/PostCard/PostCard';
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 import toast from 'react-hot-toast';
+import useAuth from '../hooks/useAuth'; // Import the new hook
 import './Profile.scss';
 
 const Profile = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user, loading: authLoading } = useSelector((state) => state.auth);
+  const { user, isAuthenticated, token, loading: authLoading } = useAuth(); // Use the useAuth hook
   const { userPosts, loading: postsLoading } = useSelector((state) => state.posts);
   
   const [isEditing, setIsEditing] = useState(false);
-  const [profileImage, setProfileImage] = useState(user?.profilePicture || null);
+  const [profileImage, setProfileImage] = useState(user?.profile_picture || null);
   
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
   useEffect(() => {
-    if (user) {
-      dispatch(fetchUserPosts(user._id));
+    if (!isAuthenticated) {
+      toast.error('You need to be logged in to view this page.');
+      navigate('/login');
+      return;
+    }
+
+    if (user && user.id) {
+      dispatch(fetchUserPosts(user.id));
       reset({
         name: user.name || '',
         email: user.email || '',
         bio: user.bio || '',
       });
-      setProfileImage(user.profilePicture || null);
+      setProfileImage(user.profile_picture || null);
+    } else if (isAuthenticated && !user?.id) {
+      // This case handles when isAuthenticated is true but user.id is missing (incomplete user data)
+      console.warn('Profile page: Authenticated but user ID is missing. Logging out.');
+      toast.error('Session data incomplete. Please log in again.');
+      // You might want to dispatch a logout action here if you want to force re-login
+      // dispatch(logout());
+      navigate('/login');
     }
-  }, [user, dispatch, reset]);
+  }, [user, dispatch, reset, isAuthenticated, navigate]);
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
@@ -45,10 +60,10 @@ const Profile = () => {
   const onSubmit = (data) => {
     const profileData = {
       ...data,
-      profilePicture: profileImage,
+      profile_picture: profileImage, // Use profile_picture for backend consistency
     };
     
-    dispatch(updateProfile(profileData)).then((result) => {
+    dispatch(updateProfile({ userId: user.id, ...profileData })).then((result) => {
       if (result.type.endsWith('fulfilled')) {
         toast.success('Profile updated successfully!');
         setIsEditing(false);
@@ -202,7 +217,7 @@ const Profile = () => {
             ) : (
               <div className="posts-grid">
                 {userPosts.map((post) => (
-                  <PostCard key={post._id} post={post} />
+                  <PostCard key={post.id} post={post} />
                 ))}
               </div>
             )}
