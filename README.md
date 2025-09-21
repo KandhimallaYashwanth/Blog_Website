@@ -6,6 +6,117 @@ A modern, feature-rich blog application built with React, Node.js, and Supabase.
 
 BlogSphere is a comprehensive blog platform that demonstrates modern web development practices with a focus on user experience, security, and scalability.
 
+## Demo
+
+Check out the live version of BlogSphere:
+
+[Live Website](https://blogsphere-frontend-64j6.onrender.com)
+
+Or watch the demo video:
+
+[Demo Video](https://drive.google.com/file/d/1QDP3e7vgGc4cyJYNT-_MgHtm4f8izfwg/view?usp=sharing)
+
+This demo shows how users can **sign up, log in, and perform CRUD operations** seamlessly. You can see the **interactive UI** and **real-time updates** in action.
+
+
+
+## 🛠️ Setup Instructions
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm 
+- Supabase account
+- Git
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd Blog_Website
+```
+
+### 2. Backend Setup
+
+```bash
+cd backend
+npm install
+```
+
+Create a `.env` file in the backend directory:
+
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Supabase Configuration
+SUPABASE_URL=<YOUR_SUPABASE_URL>
+SUPABASE_ANON_KEY=<YOUR_SUPABASE_ANON_KEY>
+SUPABASE_SERVICE_ROLE_KEY=<YOUR_SUPABASE_SERVICE_ROLE_KEY>
+
+# JWT Configuration
+JWT_SECRET=<YOUR_JWT_SECRET>
+JWT_EXPIRES_IN=7d
+
+# Google OAuth Client ID
+REACT_APP_GOOGLE_CLIENT_ID=<YOUR_GOOGLE_CLIENT_ID>
+
+# CORS Configuration
+CORS_ORIGIN=http://localhost:3000
+
+# File Upload Configuration
+MAX_FILE_SIZE=5242880
+ALLOWED_FILE_TYPES=image/jpeg,image/png,image/gif,image/webp
+
+```
+
+Run the database schema:
+
+1. Open your Supabase dashboard
+2. Go to SQL Editor
+3. Copy and paste the contents of `backend/supabase-schema.sql`
+4. Execute the SQL to create tables, functions, and triggers
+
+Start the backend server:
+
+```bash
+npm start
+```
+
+### 3. Frontend Setup
+
+```bash
+cd web
+npm install
+```
+
+Create a `.env` file in the web directory:
+
+```env
+REACT_APP_SUPABASE_URL=your_supabase_project_url
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
+REACT_APP_API_URL=http://localhost:5000/api
+```
+
+Start the frontend development server:
+
+```bash
+npm start
+```
+
+### 4. Google OAuth Setup (Optional)
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URIs:
+   - `http://localhost:3000` (development)
+   - Your production domain
+6. Update the Google OAuth configuration in your Supabase dashboard
+
+
 ### Key Features
 
 - **User Authentication & Authorization**
@@ -16,13 +127,12 @@ BlogSphere is a comprehensive blog platform that demonstrates modern web develop
 
 - **Blog Management**
   - Create, read, update, and delete posts
-  - Rich text content with image uploads
-  - Tag system for content organization
+  - Rich text content
   - Post search functionality
 
 - **Social Features**
   - Like posts with real-time count updates
-  - Comment system with nested replies
+  - Comment system 
   - View tracking for posts
   - User profiles with bio and avatar
 
@@ -41,7 +151,6 @@ BlogSphere is a comprehensive blog platform that demonstrates modern web develop
 - React Router for navigation
 - SCSS for styling
 - React Hook Form for form handling
-- React Hot Toast for notifications
 
 **Backend:**
 - Node.js with Express
@@ -225,84 +334,6 @@ All API responses follow this format:
 - `500` - Internal Server Error
 
 
-## 🛠️ Setup Instructions
-
-### Prerequisites
-
-- Node.js (v16 or higher)
-- npm 
-- Supabase account
-- Git
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd Blog_Website
-```
-
-### 2. Backend Setup
-
-```bash
-cd backend
-npm install
-```
-
-Create a `.env` file in the backend directory:
-
-```env
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-PORT=5000
-```
-
-Run the database schema:
-
-1. Open your Supabase dashboard
-2. Go to SQL Editor
-3. Copy and paste the contents of `backend/supabase-schema.sql`
-4. Execute the SQL to create tables, functions, and triggers
-
-Start the backend server:
-
-```bash
-npm start
-```
-
-### 3. Frontend Setup
-
-```bash
-cd web
-npm install
-```
-
-Create a `.env` file in the web directory:
-
-```env
-REACT_APP_SUPABASE_URL=your_supabase_project_url
-REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
-REACT_APP_API_URL=http://localhost:5000/api
-```
-
-Start the frontend development server:
-
-```bash
-npm start
-```
-
-### 4. Google OAuth Setup (Optional)
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing one
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URIs:
-   - `http://localhost:3000` (development)
-   - Your production domain
-6. Update the Google OAuth configuration in your Supabase dashboard
-
-
 ### Prompting Techniques Used
 
 #### 1. **Structured Problem Definition**
@@ -429,12 +460,12 @@ const getValidToken = async () => {
 
 ## 🚀 Deployment
 
-### Frontend (Vercel/Netlify)
+### Frontend (Render)
 1. Build the project: `npm run build`
 2. Deploy the `build` folder to your hosting service
 3. Set environment variables in your hosting dashboard
 
-### Backend (Railway/Heroku)
+### Backend (Render)
 1. Set up your database connection
 2. Deploy the backend code
 3. Update frontend API URLs to point to production backend
@@ -447,9 +478,7 @@ const getValidToken = async () => {
 4. Push to branch: `git push origin feature-name`
 5. Submit a pull request
 
-## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
