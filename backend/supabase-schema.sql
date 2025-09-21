@@ -28,6 +28,14 @@ CREATE TABLE posts (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create user_likes table to track likes by users
+CREATE TABLE user_likes (
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, post_id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create comments table (for future use)
 CREATE TABLE comments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -60,6 +68,11 @@ CREATE POLICY "Users can create comments" ON comments FOR INSERT WITH CHECK (aut
 CREATE POLICY "Users can update own comments" ON comments FOR UPDATE USING (auth.uid() = author_id);
 CREATE POLICY "Users can delete own comments" ON comments FOR DELETE USING (auth.uid() = author_id);
 
+-- Policies for user_likes table
+CREATE POLICY "Users can view own likes" ON user_likes FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own likes" ON user_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own likes" ON user_likes FOR DELETE USING (auth.uid() = user_id);
+
 -- Function to create profile on new user signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -86,6 +99,49 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Function to handle liking/unliking posts
+CREATE OR REPLACE FUNCTION public.increment_likes(
+  post_id_param UUID,
+  user_id_param UUID
+)
+RETURNS TABLE (id UUID, title TEXT, content TEXT, author_id UUID, tags TEXT[], image TEXT, likes INTEGER, views INTEGER, created_at TIMESTAMP WITH TIME ZONE, updated_at TIMESTAMP WITH TIME ZONE) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  _current_likes INTEGER;
+  _has_liked BOOLEAN;
+BEGIN
+  -- Check if the user has already liked this post
+  SELECT EXISTS (SELECT 1 FROM user_likes WHERE user_id = user_id_param AND post_id = post_id_param) INTO _has_liked;
+
+  IF _has_liked THEN
+    -- User has liked, so unlike (decrement likes and remove entry)
+    DELETE FROM public.user_likes
+    WHERE user_id = user_id_param AND post_id = post_id_param;
+
+    UPDATE public.posts
+    SET likes = likes - 1
+    WHERE id = post_id_param
+    RETURNING likes INTO _current_likes;
+  ELSE
+    -- User has not liked, so like (increment likes and add entry)
+    INSERT INTO public.user_likes (user_id, post_id)
+    VALUES (user_id_param, post_id_param);
+
+    UPDATE public.posts
+    SET likes = likes + 1
+    WHERE id = post_id_param
+    RETURNING likes INTO _current_likes;
+  END IF;
+
+  -- Return the updated post to the frontend
+  RETURN QUERY SELECT *
+  FROM public.posts
+  WHERE id = post_id_param;
+END;
+$$
 
 -- Triggers for updated_at
 CREATE TRIGGER handle_updated_at_profiles
