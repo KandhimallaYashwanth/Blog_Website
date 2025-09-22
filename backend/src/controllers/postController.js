@@ -75,10 +75,20 @@ export const getPost = async (req, res) => {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    // Increment views after fetching the post (this will return the updated post with incremented views)
+    // Increment views after fetching the post
     console.log(`Attempting to increment views for post ID: ${id}`);
-    const { data: updatedPost, error: viewError } = await supabase
-      .rpc('increment_views', { post_id_param: id })
+    const { error: viewError } = await supabase
+      .rpc('increment_views', { post_id_param: id });
+
+    if (viewError) {
+      console.error('Error incrementing post views:', viewError);
+      // If increment fails, fall back to the previously fetched post (with comments)
+      return res.json(post);
+    }
+
+    // Re-fetch the post with relationships to include comments and author after view increment
+    const { data: postWithRelations, error: refetchError } = await supabase
+      .from('posts')
       .select(`
         id,
         title,
@@ -87,18 +97,30 @@ export const getPost = async (req, res) => {
         likes,
         views,
         created_at,
-        updated_at
-      `); // Removed profiles and comments embedding from RPC select
+        updated_at,
+        profiles:author_id (
+          id,
+          name,
+          profile_picture,
+          bio
+        ),
+        comments(
+          id,
+          content,
+          created_at,
+          profiles:author_id(id, name, profile_picture)
+        )
+      `)
+      .eq('id', id)
+      .single();
 
-    if (viewError) {
-      console.error('Error incrementing post views:', viewError);
-      // Continue to send the original post data if view increment fails
+    if (refetchError) {
+      console.error('Error re-fetching post after view increment:', refetchError);
+      // As a last resort, return the original post (without updated views)
       return res.json(post);
     }
 
-    console.log(`Successfully incremented views for post ID: ${id}. New views data:`, updatedPost[0]);
-    // Send the updated post data (with incremented views) back to the frontend
-    res.json(updatedPost[0]);
+    res.json(postWithRelations);
 
   } catch (error) {
     console.error('Get post error:', error);

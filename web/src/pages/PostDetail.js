@@ -51,7 +51,7 @@ const PostDetail = () => {
 
   const isAuthor = isAuthenticated && user && currentPost && user.id === currentPost.author?.id;
 
-  if (error || (!currentPost && !loading)) {
+  if (error) {
     return (
       <div className="error-container">
         <h2>Post not found</h2>
@@ -59,6 +59,19 @@ const PostDetail = () => {
         <button onClick={() => navigate('/')} className="back-btn">
           Back to Home
         </button>
+      </div>
+    );
+  }
+
+  // While the post is being fetched or not yet available, show a loading state
+  if (!currentPost) {
+    return (
+      <div className="post-detail">
+        <div className="container">
+          <div className="loading-post">
+            <p>Loading post...</p>
+          </div>
+        </div>
       </div>
     );
   }
