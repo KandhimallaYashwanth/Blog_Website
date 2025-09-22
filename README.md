@@ -58,7 +58,7 @@ BlogSphere is a comprehensive blog platform that demonstrates modern web develop
 ## 📁 Project Structure
 
 ```
-Blog_Website/
+Mitt_Arv_Assignment/
 ├── backend/                          # Node.js/Express API Server
 │   ├── src/
 │   │   ├── config/
