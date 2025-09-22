@@ -1,135 +1,162 @@
-# 🚀 BlogSphere Complete Setup Guide
+# 🚀 BlogSphere – Complete Setup Guide  
 
-## ❌ **Current Errors & Solutions:**
+This guide will help you set up **BlogSphere** (Frontend + Backend + Supabase) on your local machine.  
 
-### **1. manifest.json 404 Error** ✅ FIXED
-- **Problem:** Missing manifest.json file
-- **Solution:** Created `web/public/manifest.json`
-- **Status:** ✅ Fixed
+---
+## Prerequisites
 
-### **2. Backend 500 Errors** 🔧 NEEDS CONFIGURATION
-- **Problem:** Backend not configured with Supabase credentials
-- **Solution:** Configure Supabase and start backend
+- Node.js (v16 or higher)
+- npm 
+- Supabase account
+- Git
 
 ---
 
-## 🛠️ **Step-by-Step Setup:**
-
-### **Step 1: Set Up Supabase Database**
-
-1. **Go to [supabase.com](https://supabase.com)** and create a new project
-2. **Run the SQL schema:**
-   - Go to your Supabase dashboard
-   - Click "SQL Editor"
-   - Copy and paste the entire content from `backend/supabase-schema.sql`
-   - Click "Run" to execute
-
-3. **Get your credentials:**
-   - Go to Settings → API
-   - Copy your Project URL and API keys
-
-### **Step 2: Configure Backend**
-
-1. **Update backend `.env` file:**
-   ```bash
-   cd backend
-   # Edit .env file with your Supabase credentials
-   ```
-
-2. **Replace these values in `.env`:**
-   ```env
-   SUPABASE_URL=https://your-project-id.supabase.co
-   SUPABASE_ANON_KEY=your-anon-key-here
-   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
-   JWT_SECRET=your-super-secret-jwt-key-here
-   ```
-
-### **Step 3: Start Backend Server**
+## ⚙️ 1. Clone Repository  
 
 ```bash
-cd backend
-npm run dev
+git clone <repository-url>
+cd Mitt_Arv_Assignment
 ```
 
-**Expected output:**
-```
-🚀 BlogSphere Backend running on http://localhost:5000
-📊 Environment: development
-```
+## 🗄️ 2. Database Setup (Supabase)
 
-### **Step 4: Start Frontend**
+1. **Create a Supabase project** → [supabase.com](https://supabase.com)
+
+2. **Run the schema:**
+   - Go to your Supabase Dashboard  
+   - Open **SQL Editor**  
+   - Paste the contents of `backend/supabase-schema.sql`  
+   - Run the query to create tables, functions, and triggers  
+
+3. **Get your credentials:**
+   - Go to **Settings → API**  
+   - Copy the following values:  
+     - **Project URL**  
+     - **anon public key**  
+     - **service_role key**  
+
+## 🔧3. Backend Setup
+- cd backend
+- npm install
+
+### Configure .env in backend/
+- Create a `.env` file in the backend directory:
+
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Supabase Configuration
+SUPABASE_URL=<YOUR_SUPABASE_URL>
+SUPABASE_ANON_KEY=<YOUR_SUPABASE_ANON_KEY>
+SUPABASE_SERVICE_ROLE_KEY=<YOUR_SUPABASE_SERVICE_ROLE_KEY>
+
+# JWT Configuration
+JWT_SECRET=<YOUR_JWT_SECRET>
+JWT_EXPIRES_IN=7d
+
+# Google OAuth Client ID
+REACT_APP_GOOGLE_CLIENT_ID=<YOUR_GOOGLE_CLIENT_ID>
+
+# CORS Configuration
+CORS_ORIGIN=http://localhost:3000
+
+# File Upload Configuration
+MAX_FILE_SIZE=5242880
+ALLOWED_FILE_TYPES=image/jpeg,image/png,image/gif,image/webp
+
+```
+### Start the backend server:
+
+```bash
+npm install
+npm start
+```
+### Expected output
+
+- 🚀 BlogSphere Backend running on http://localhost:5000
+- 📊 Environment: development
+
+## 4.Frontend Setup
 
 ```bash
 cd web
+npm install
+```
+
+- Create a `.env` file in the web directory:
+
+```env
+REACT_APP_SUPABASE_URL=your_supabase_project_url
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
+REACT_APP_API_URL=http://localhost:5000/api
+```
+
+### Start the frontend development server:
+
+```bash
 npm start
 ```
-
-**Expected output:**
-```
+#### Expected output:
+```bash
 webpack compiled successfully!
-Local:            http://localhost:3000
+Local:   http://localhost:3000
 ```
 
----
+## 🔍5. Health Checks
+- Backend
+```bash
+curl http://localhost:5000
+```
+- Should return:
+```bash
+{"message":"BlogSphere Backend API 🚀","version":"1.0.0","status":"healthy"}
+```
+- API
+```bash
+curl http://localhost:5000/api/posts
+```
 
-## 🔍 **Troubleshooting:**
+## Frontend
 
-### **Backend 500 Errors:**
-- ✅ Check if Supabase credentials are correct
-- ✅ Verify database schema is created
-- ✅ Ensure backend is running on port 5000
-- ✅ Check backend console for error messages
+- Visit http://localhost:3000 in your browser.
+- You should see the BlogSphere homepage.
 
-### **Frontend Connection Issues:**
-- ✅ Verify `REACT_APP_API_URL=http://localhost:5000/api` in web/.env
-- ✅ Ensure backend is running before frontend
-- ✅ Check browser network tab for API calls
+## 🛠️ Troubleshooting
 
-### **Database Issues:**
-- ✅ Run the SQL schema in Supabase
-- ✅ Check Row Level Security policies
-- ✅ Verify storage bucket is created
+### Backend 500 errors:
 
----
+- Check .env Supabase credentials
+- Ensure SQL schema was applied
+- Verify backend is running
 
-## 📋 **Quick Test:**
+### Frontend API errors:
 
-1. **Backend Health Check:**
-   ```bash
-   curl http://localhost:5000
-   ```
-   Should return: `{"message":"BlogSphere Backend API 🚀","version":"1.0.0","status":"healthy"}`
+- Confirm REACT_APP_API_URL=http://localhost:5000/api in web/.env
 
-2. **Frontend Health Check:**
-   - Open http://localhost:3000
-   - Should see BlogSphere homepage
-   - No console errors
+- Start backend before frontend
 
-3. **API Test:**
-   ```bash
-   curl http://localhost:5000/api/posts
-   ```
-   Should return: `[]` (empty array) or posts data
+### Database issues:
 
----
+- Ensure RLS policies are enabled
+- Check that required storage buckets exist
 
-## 🎯 **Expected Results:**
+### 🎯 Final Checklist
 
-✅ **No more 404 errors** (manifest.json fixed)  
-✅ **No more 500 errors** (backend configured)  
-✅ **Frontend loads successfully**  
-✅ **Backend API responds**  
-✅ **Database connection working**  
+- ✅ Supabase schema created 
 
----
+- ✅ .env files configured (backend + frontend)
 
-## 🚀 **Next Steps:**
+- ✅ Backend running on port 5000
 
-1. **Configure Supabase** with the provided SQL schema
-2. **Update backend .env** with your credentials
-3. **Start backend server** (`npm run dev`)
-4. **Start frontend** (`npm start`)
-5. **Test the application** by creating an account and posts
+- ✅ Frontend running on port 3000
 
-Your BlogSphere application will be fully functional! 🎉
+- ✅ Able to sign up, log in, and create posts
+
+
+
+
+
 
