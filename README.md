@@ -407,7 +407,7 @@ This demonstrates **effective AI-assisted development**, highlighting both techn
 
 ## 🌟 Bonus Features & Current Status
 
-|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+
 | Feature                       | Status                                                                                                                                       |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------  |
 | SEO compliant                 | ✅ Partially Implemented – Basic HTML structure, DOCTYPE, meta charset & viewport, meta description, favicon, manifest.json, font preloading |
@@ -417,10 +417,10 @@ This demonstrates **effective AI-assisted development**, highlighting both techn
 | Pagination / Infinite scroll  | ⚠️ Not implemented                                                                                                                           |
 | Rich text editor for posts    | ⚠️ Not implemented                                                                                                                           |
 | AI content suggestions        | ⚠️ Not implemented                                                                                                                           |
-|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+
 
 ## 🛠️ Expected Deliverables
-|------------------------------------------------------------------------|
+
 | Deliverable                                              | Status      |
 | -------------------------------------------------------- | ----------  |
 | Codebase hosted on GitHub (well-structured with README)  | ✅ Done     |
@@ -430,7 +430,7 @@ This demonstrates **effective AI-assisted development**, highlighting both techn
 | REST API backend                                         | ✅ Done     |
 | Clear setup instructions for local development           | ✅ Done     |
 | Description of when and where AI was used in development | ✅ Done     |
-|-------------------------------------------------------------------------|
+
 
 ### Challenges Faced & Solutions
 
