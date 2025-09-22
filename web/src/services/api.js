@@ -40,15 +40,24 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url || '';
+    const isAuthRoute = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register') || requestUrl.includes('/auth/google');
+
+    if (error.response?.status === 401 && !isAuthRoute) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      const onLoginPage = window.location.pathname === '/login';
+      if (!onLoginPage) {
+        window.location.href = '/login';
+      }
     }
-    
-    const message = error.response?.data?.message || 'Something went wrong';
-    toast.error(message);
-    
+
+    // Avoid duplicate toasts for auth routes; Login/Signup screens handle their own errors
+    if (!isAuthRoute) {
+      const message = error.response?.data?.message || 'Something went wrong';
+      toast.error(message);
+    }
+
     return Promise.reject(error);
   }
 );
