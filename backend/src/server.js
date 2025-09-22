@@ -24,7 +24,7 @@ app.use(limiter);
 const corsOptions = {
   origin: [
     "http://localhost:3000",                     // Local development
-    "https://blogsphere-frontend-64j6.onrender.com", // Production frontend
+    "https://blogsphere-2s7e.onrender.com", // Production frontend
     process.env.CORS_ORIGIN                        // Optional origin from .env
   ].filter(Boolean),
   credentials: true,
