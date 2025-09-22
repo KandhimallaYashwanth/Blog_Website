@@ -10,13 +10,19 @@ BlogSphere is a comprehensive blog platform that demonstrates modern web develop
 
 Check out the live version of BlogSphere:
 
-[Live Website](https://blogsphere-frontend-64j6.onrender.com)
+[Live Website](https://blogsphere-2s7e.onrender.com/)
 
 Or watch the demo video:
 
 [Demo Video](https://drive.google.com/file/d/1QDP3e7vgGc4cyJYNT-_MgHtm4f8izfwg/view?usp=sharing)
 
 This demo shows how users can **sign up, log in, and perform CRUD operations** seamlessly. You can see the **interactive UI** and **real-time updates** in action.
+
+
+## Live Links
+
+- **Frontend:** [BlogSphere Frontend](https://blogsphere-2s7e.onrender.com)  
+- **Backend (API):** [BlogSphere Backend](https://blogsphere-tnqp.onrender.com)
 
 
 
@@ -333,6 +339,26 @@ All API responses follow this format:
 - `404` - Not Found
 - `500` - Internal Server Error
 
+## 🤖 AI Tools Used  
+
+I developed the project independently, handling all core logic, architecture, and integrations.  
+AI tools were used **selectively to assist, optimize, and speed up certain tasks**, not to replace manual work.  
+
+**AI Tools leveraged:**  
+- **Cursor** – for code optimization and improving performance  
+- **ChatGPT & Perplexity** – for assistance in solving errors, suggesting fixes, and refining my prompts  
+- **Copilot** – for boilerplate code and repetitive tasks
+  
+**Important:** AI was only used to suggest optimizations, explain complex issues, and provide guidance. All suggestions were critically evaluated and fully integrated by me—no full projects were copied, and I maintained full control over the code.
+
+### Where AI Helped:
+
+- ⚛️ **Frontend Components & Styling:** Generated React component boilerplate and SCSS templates, which I refined and integrated manually  
+- 🔗 **Backend APIs:** Suggested endpoint structures, validations, and error handling patterns, customized for production use  
+- 🗄️ **Database Design:** Drafted PostgreSQL schema, RPC functions, and triggers with AI guidance, later optimized by me  
+- 📦 **State Management:** Assisted with Redux slices and async thunks; I ensured proper data flow and implemented optimistic UI updates  
+- 🛠️ **Debugging & Optimization:** I understood all errors myself, but used ChatGPT and Perplexity to **suggest solutions, verify approaches, and refine prompts** for accurate fixes  
+
 
 ### Prompting Techniques Used
 
@@ -374,6 +400,38 @@ Please resolve these issues by:
 
 **Why it worked:** By asking for both backend and frontend debugging, the AI could provide a comprehensive solution that addressed the entire request flow.
 
+### Summary
+
+AI assisted in **understanding complex problems, suggesting optimizations, and guiding development**, while I independently managed **all feature implementation, debugging, and production-ready decisions**.  
+This demonstrates **effective AI-assisted development**, highlighting both technical expertise and responsible AI usage.
+
+## 🌟 Bonus Features & Current Status
+
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Feature                       | Status                                                                                                                                       |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------  |
+| SEO compliant                 | ✅ Partially Implemented – Basic HTML structure, DOCTYPE, meta charset & viewport, meta description, favicon, manifest.json, font preloading |
+| Search blogs by title or tags | ✅ Implemented                                                                                                                               |
+| Like/Bookmark posts           | ✅ Like functionality implemented (Bookmark coming soon)                                                                                     |
+| Comment system (basic)        | ✅ Implemented                                                                                                                               |
+| Pagination / Infinite scroll  | ⚠️ Not implemented                                                                                                                           |
+| Rich text editor for posts    | ⚠️ Not implemented                                                                                                                           |
+| AI content suggestions        | ⚠️ Not implemented                                                                                                                           |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+
+## 🛠️ Expected Deliverables
+|------------------------------------------------------------------------|
+| Deliverable                                              | Status      |
+| -------------------------------------------------------- | ----------  |
+| Codebase hosted on GitHub (well-structured with README)  | ✅ Done     |
+| Working web interface                                    | ✅ Done     |
+| Working web app (video demo)                             | ✅ Done     |
+| Working mobile app (screenshots/video demo)              | ❌ Not done |
+| REST API backend                                         | ✅ Done     |
+| Clear setup instructions for local development           | ✅ Done     |
+| Description of when and where AI was used in development | ✅ Done     |
+|-------------------------------------------------------------------------|
+
 ### Challenges Faced & Solutions
 
 #### 1. **SQL Column Ambiguity**
@@ -387,6 +445,7 @@ SELECT id, title FROM posts p JOIN users u ON p.author_id = u.id
 -- After  
 SELECT p.id, p.title FROM posts p JOIN users u ON p.author_id = u.id
 ```
+AI Assistance: I understood the error myself, but used ChatGPT/Perplexity to suggest best practices and optimize the query structure
 
 #### 2. **React Strict Mode Double Rendering**
 **Challenge:** Views were incrementing by 2 due to useEffect running twice in development.
@@ -401,6 +460,7 @@ useEffect(() => {
   }
 }, [dispatch, id]);
 ```
+AI Assistance: AI suggested potential causes for the double rendering; I implemented the final solution independently.
 
 #### 3. **JWT Token Management**
 **Challenge:** Malformed tokens causing authentication failures.
@@ -416,6 +476,7 @@ const getValidToken = async () => {
   return session?.access_token;
 };
 ```
+AI Assistance: ChatGPT/Perplexity helped brainstorm approaches for token refresh, while I implemented the production-ready logic.
 
 #### 4. **State Synchronization**
 **Challenge:** UI not reflecting backend changes immediately.
@@ -428,6 +489,7 @@ const getValidToken = async () => {
   }
 })
 ```
+AI Assistance: AI suggested techniques for optimistic updates; I ensured correct state flow and implemented them.
 
 #### 5. **Responsive Design Complexity**
 **Challenge:** Creating consistent, mobile-first responsive layouts.
@@ -445,6 +507,7 @@ const getValidToken = async () => {
   }
 }
 ```
+AI Assistance: AI suggested responsive grid patterns; I customized them to match the app's design requirements.
 
 ### Key Learnings
 
