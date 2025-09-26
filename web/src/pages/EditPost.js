@@ -21,8 +21,27 @@ const EditPost = () => {
   const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm();
 
   useEffect(() => {
-    dispatch(fetchPost(id));
-    
+    // Try to get post from cached posts in localStorage
+    const cached = localStorage.getItem(
+      process.env.REACT_APP_API_URL
+        ? `${process.env.REACT_APP_API_URL}/posts`
+        : 'http://localhost:5000/api/posts'
+    );
+    let found = null;
+    if (cached) {
+      try {
+        const { data } = JSON.parse(cached);
+        found = Array.isArray(data) ? data.find((p) => String(p.id) === String(id)) : null;
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    if (found) {
+      dispatch({ type: 'posts/fetchPost/fulfilled', payload: found });
+    } else {
+      dispatch(fetchPost(id));
+    }
+
     return () => {
       dispatch(clearCurrentPost());
     };

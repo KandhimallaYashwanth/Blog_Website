@@ -29,7 +29,26 @@ const Profile = () => {
     }
 
     if (user && user.id) {
-      dispatch(fetchUserPosts(user.id));
+      // Try to get posts from cached posts in localStorage
+      const cached = localStorage.getItem(
+        process.env.REACT_APP_API_URL
+          ? `${process.env.REACT_APP_API_URL}/posts`
+          : 'http://localhost:5000/api/posts'
+      );
+      let userPostsCached = null;
+      if (cached) {
+        try {
+          const { data } = JSON.parse(cached);
+          userPostsCached = Array.isArray(data) ? data.filter((p) => String(p.author?.id) === String(user.id)) : null;
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+      if (userPostsCached && userPostsCached.length > 0) {
+        dispatch({ type: 'posts/fetchUserPosts/fulfilled', payload: userPostsCached });
+      } else {
+        dispatch(fetchUserPosts(user.id));
+      }
       reset({
         name: user.name || '',
         email: user.email || '',

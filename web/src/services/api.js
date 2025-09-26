@@ -1,5 +1,6 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { cacheFetch } from '../utils/cacheFetch';
 
 // Create axios instance
 const api = axios.create({
@@ -121,6 +122,16 @@ export const postsAPI = {
   addComment: async (postId, content) => {
     return api.post(`/posts/${postId}/comment`, { content });
   },
+};
+
+export const cachedPostsAPI = {
+  getAllPosts: async () => {
+    const url = process.env.REACT_APP_API_URL
+      ? `${process.env.REACT_APP_API_URL}/posts`
+      : 'http://localhost:5000/api/posts';
+    return cacheFetch(url, { headers: { 'Content-Type': 'application/json' } });
+  },
+  // You can add more cached endpoints as needed
 };
 
 export default api;

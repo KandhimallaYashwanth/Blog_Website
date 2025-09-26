@@ -18,14 +18,36 @@ const PostDetail = () => {
   const fetchedRef = React.useRef(false); // Add a ref to track if fetch has been made
 
   useEffect(() => {
-    if (id && !fetchedRef.current) {
-      dispatch(fetchPost(id));
-      fetchedRef.current = true; // Mark as fetched
-    } else if (!id) {
+    if (!id) {
       toast.error('Invalid post ID provided.');
-      navigate('/'); // Redirect to home or a suitable error page
+      navigate('/');
+      return;
     }
-    
+
+    // Try to get post from cached posts in localStorage
+    const cached = localStorage.getItem(
+      process.env.REACT_APP_API_URL
+        ? `${process.env.REACT_APP_API_URL}/posts`
+        : 'http://localhost:5000/api/posts'
+    );
+    let found = null;
+    if (cached) {
+      try {
+        const { data } = JSON.parse(cached);
+        found = Array.isArray(data) ? data.find((p) => String(p.id) === String(id)) : null;
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    if (found) {
+      // Set post directly in Redux store
+      dispatch({ type: 'posts/fetchPost/fulfilled', payload: found });
+      fetchedRef.current = true;
+    } else if (!fetchedRef.current) {
+      dispatch(fetchPost(id));
+      fetchedRef.current = true;
+    }
+
     return () => {
       dispatch(clearCurrentPost());
     };

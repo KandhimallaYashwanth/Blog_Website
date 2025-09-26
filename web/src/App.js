@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Layout from './components/Layout/Layout';
@@ -7,13 +7,22 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import PostDetail from './pages/PostDetail';
 import Profile from './pages/Profile';
-import MyPosts from './pages/MyPosts'; // Import MyPosts
+import MyPosts from './pages/MyPosts';
 import CreatePost from './pages/CreatePost';
 import EditPost from './pages/EditPost';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import { cachedPostsAPI } from './services/api';
+
 
 function App() {
   const { isAuthenticated } = useSelector((state) => state.auth);
+
+  // Preload all posts and cache them on app load
+  useEffect(() => {
+    cachedPostsAPI.getAllPosts().catch(() => {
+      // Ignore errors, fallback to normal fetch in components
+    });
+  }, []);
 
   return (
     <div className="App">
