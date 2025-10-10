@@ -168,7 +168,7 @@ npm start
 ## 📁 Project Structure
 
 ```
-Mitt_Arv_Assignment/
+Blog_Website/
 ├── backend/                          # Node.js/Express API Server
 │   ├── src/
 │   │   ├── config/
